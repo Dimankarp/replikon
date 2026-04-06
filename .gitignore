@@ -41,3 +41,8 @@
 *.dwo
 
 compile_commands.json
+
+
+# Cmake builds
+
+build/

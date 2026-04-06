@@ -4,10 +4,10 @@
 namespace replikon {
 
 class ICRDT {
-
   virtual void Merge() {};
   virtual ~ICRDT() = delete;
 };
+
 
 } // namespace replikon
 

@@ -17,9 +17,9 @@ add_executable(replikon
 )
 
 set_target_properties(replikon PROPERTIES
-    CXX_STANDARD 20
+    CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON
 )
-target_compile_options(replikon PRIVATE -Wall -Wextra -Wpedantic -Wno-sign-compare)
+target_compile_options(replikon PRIVATE -Wall -Wextra -Wpedantic)
 
 
