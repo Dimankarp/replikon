@@ -1,5 +1,5 @@
-#ifndef REPLIKON_CHAT_TREE_H
-#define REPLIKON_CHAT_TREE_H
+#ifndef REPLIKON_CRDT_LOG_H
+#define REPLIKON_CRDT_LOG_H
 
 #include "traits/crdt.h"
 #include "utils.h"
@@ -16,7 +16,7 @@ struct Interval {
 
 } // namespace internal
 
-template <typename Value> class ChatTree {
+template <typename Value> class Log {
 public:
   using Header = std::vector<internal::Interval>;
   using Request = Header;
@@ -28,9 +28,8 @@ public:
   MergeStatus Merge(Update);
 };
 
-static_assert(traits::IsCRDT<ChatTree<int>>::value,
-              "ChatTree must fulfill CRDT trait");
+static_assert(traits::IsCRDT<Log<int>>::value, "Log must fulfill CRDT trait");
 
 } // namespace replikon
 
-#endif // REPLIKON_CHAT_TREE_H
+#endif // REPLIKON_CRDT_LOG_H

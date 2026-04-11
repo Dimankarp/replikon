@@ -1,6 +1,7 @@
 #ifndef REPLIKON_CRDTS_REGISTER_H
 #define REPLIKON_CRDTS_REGISTER_H
 
+#include "traits/crdt.h"
 #include "utils.h"
 #include <variant>
 namespace replikon::crdt {
@@ -9,7 +10,8 @@ namespace replikon::crdt {
  * Single-value Register
  */
 
-template <typename Value> class Register {
+template <typename Value> //
+class Register {
 public:
   using Header = std::monostate;
   using Request = std::monostate;
@@ -22,6 +24,8 @@ public:
     value = u;
     return MergeStatus::MERGED;
   }
+
+  void LocalUpdate(Update u) { Merge(u); }
 
 private:
   Value value;
