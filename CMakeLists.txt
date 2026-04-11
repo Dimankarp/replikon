@@ -1,15 +1,16 @@
 cmake_minimum_required(VERSION 3.27)
 
-project(Compiler CXX)
+project(Compiler C CXX)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/depends/sqlite3
 )
 
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
-file(GLOB_RECURSE DEPENDENCIES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/depends/*.cpp")
+file(GLOB_RECURSE DEPENDENCIES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/depends/*.(c|cpp)")
 
 add_executable(replikon
     ${SOURCES}
@@ -22,4 +23,6 @@ set_target_properties(replikon PROPERTIES
 )
 target_compile_options(replikon PRIVATE -Wall -Wextra -Wpedantic)
 
-
+# Sqlite dependencies
+find_package(Threads REQUIRED)
+target_link_libraries(replikon PRIVATE Threads::Threads ${CMAKE_DL_LIBS})

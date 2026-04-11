@@ -46,7 +46,6 @@ public:
   }
 
   MergeStatus Merge(Update &update) {
-
     MergeStatus status = MergeStatus::MERGED;
     for (auto &&[k, upd] : update) {
       auto &v = values[k];

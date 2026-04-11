@@ -10,13 +10,13 @@ namespace replikon {
 namespace internal {
 
 struct Interval {
-  int64_t start;
-  int64_t len;
+  uint64_t start;
+  uint64_t len;
 };
 
 } // namespace internal
 
-template <typename Value> class Log {
+template <typename Value, typename Times> class Log {
 public:
   using Header = std::vector<internal::Interval>;
   using Request = Header;
