@@ -9,23 +9,14 @@
 #include <vector>
 namespace replikon {
 
-namespace internal {
-
-struct Interval {
-  uint64_t start;
-  uint64_t len;
-};
-
-} // namespace internal
-
 template <typename Value, typename Time> class Log {
 public:
-  using Header = std::vector<internal::Interval>;
+  using Header = std::map<std::string, std::vector<Interval>>;
   using Request = Header;
   using Update = Value;
 
-  Header GetHeader() const { return {}; }
-  Request GetRequest(Header) const { return {}; }
+  Header GetHeader() const { return _messages_dao->GetHeaders(); }
+  Request GetRequest(Header header) const {}
   Update GetUpdate(Request) const { return {}; }
   MergeStatus Merge(Update);
 

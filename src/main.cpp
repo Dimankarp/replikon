@@ -32,8 +32,15 @@ int main() {
   std::cout << res << "\n";
   for (int i = 0; i < 10; i++)
     dao.InsertMessage(
-        "me", "This is my body!!!",
+        "her", "This is my body!!!",
         std::chrono::system_clock::now().time_since_epoch().count());
   dao.GetAllMessage("me");
   dao.GetAllMessage("Her");
+
+  auto headers = dao.GetHeaders();
+  for(auto&&[author, vec] : headers){
+    for(auto& i : vec){
+      printf("%s: %lld - %lld\n", author.c_str(), i.start, i.len);
+    }
+  }
 }
