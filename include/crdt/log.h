@@ -1,9 +1,11 @@
 #ifndef REPLIKON_CRDT_LOG_H
 #define REPLIKON_CRDT_LOG_H
 
+#include "dao/message.h"
 #include "traits/crdt.h"
 #include "utils.h"
 #include <cstdint>
+#include <memory>
 #include <vector>
 namespace replikon {
 
@@ -16,7 +18,7 @@ struct Interval {
 
 } // namespace internal
 
-template <typename Value, typename Times> class Log {
+template <typename Value, typename Time> class Log {
 public:
   using Header = std::vector<internal::Interval>;
   using Request = Header;
@@ -26,6 +28,9 @@ public:
   Request GetRequest(Header) const { return {}; }
   Update GetUpdate(Request) const { return {}; }
   MergeStatus Merge(Update);
+
+private:
+  std::shared_ptr<dao::Messages> _messages_dao;
 };
 
 static_assert(traits::IsCRDT<Log<int>>::value, "Log must fulfill CRDT trait");

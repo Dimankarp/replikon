@@ -19,16 +19,16 @@ public:
 
   Header GetHeader() const { return {}; }
   Request GetRequest(Header) const { return {}; }
-  Update GetUpdate(Request) const { return value; }
+  Update GetUpdate(Request) const { return _value; }
   MergeStatus Merge(Update u) {
-    value = u;
+    _value = u;
     return MergeStatus::MERGED;
   }
 
   void LocalUpdate(Update u) { Merge(u); }
 
 private:
-  Value value;
+  Value _value;
 };
 
 static_assert(traits::IsCRDT<Register<int>>::value,

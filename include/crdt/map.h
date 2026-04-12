@@ -21,7 +21,7 @@ public:
 
   Header GetHeader() const {
     Header header;
-    for (auto &&[k, v] : values) {
+    for (auto &&[k, v] : _values) {
       header.emplace_back(k, v.GetHeader());
     }
     return header;
@@ -30,7 +30,7 @@ public:
   Request GetRequest(Header &header) {
     Request request;
     for (auto &&[k, head] : header) {
-      auto &v = values[k];
+      auto &v = _values[k];
       request.emplace_back(k, v.GetRequest(head));
     }
     return request;
@@ -39,7 +39,7 @@ public:
   Update GetUpdate(Request &request) {
     Update update;
     for (auto &&[k, req] : request) {
-      auto &v = values[k];
+      auto &v = _values[k];
       update.emplace_back(k, v.GetUpdate(req));
     }
     return update;
@@ -48,7 +48,7 @@ public:
   MergeStatus Merge(Update &update) {
     MergeStatus status = MergeStatus::MERGED;
     for (auto &&[k, upd] : update) {
-      auto &v = values[k];
+      auto &v = _values[k];
       auto s = v.Merge(upd);
       if (s == MergeStatus::SKIPPED) {
         status = MergeStatus::SKIPPED;
@@ -58,11 +58,11 @@ public:
   }
 
   void LocalUpdate(const K &key, ValueUpdate &&update) {
-    values[key].LocalUpdate(update);
+    _values[key].LocalUpdate(update);
   }
 
 private:
-  std::map<K, ValueCRDT> values;
+  std::map<K, ValueCRDT> _values;
 };
 
 } // namespace replikon::crdt

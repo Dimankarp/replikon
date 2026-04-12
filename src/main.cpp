@@ -1,7 +1,13 @@
+#include "constants.h"
 #include "crdt/map.h"
 #include "crdt/register.h"
-#include "sqlite3.h"
+#include "dao/message.h"
+#include "sqlite.h"
+#include "time.h"
+#include <chrono>
+#include <cstddef>
 #include <iostream>
+#include <memory>
 using namespace replikon::crdt;
 
 int main() {
@@ -13,10 +19,21 @@ int main() {
   auto r = crdt.GetRequest(h);
   auto u = crdt.GetUpdate(r);
 
-  sqlite3 *db;
-  sqlite3_open("file", &db);
-  
-  // sqlite3_exec(db, const char *sql, int (*callback)(void *, int, char **, char **), void *, char **errmsg)
-
-  sqlite3_close(db);
+  auto db = std::make_shared<replikon::db::Sqlite>();
+  db->Connect(".db/file.sqlite");
+  // std::cout << res << "\n";
+  char *err;
+  auto res = sqlite3_exec(db->Get(), replikon::INIT_MESSAGES.c_str(), nullptr,
+                          nullptr, nullptr);
+  std::cout << res << "\n";
+  res = sqlite3_exec(db->Get(), replikon::INDEX_MESSAGES.c_str(), nullptr,
+                     nullptr, &err);
+  replikon::dao::Messages dao{db};
+  std::cout << res << "\n";
+  for (int i = 0; i < 10; i++)
+    dao.InsertMessage(
+        "me", "This is my body!!!",
+        std::chrono::system_clock::now().time_since_epoch().count());
+  dao.GetAllMessage("me");
+  dao.GetAllMessage("Her");
 }
