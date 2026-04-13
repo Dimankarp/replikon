@@ -16,7 +16,11 @@ public:
   using Update = Value;
 
   Header GetHeader() const { return _messages_dao->GetHeaders(); }
-  Request GetRequest(Header header) const {}
+  Request GetRequest(Header header) const {
+    const auto local_header = _messages_dao->GetHeaders();
+
+    
+  }
   Update GetUpdate(Request) const { return {}; }
   MergeStatus Merge(Update);
 

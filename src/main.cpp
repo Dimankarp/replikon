@@ -4,6 +4,7 @@
 #include "dao/message.h"
 #include "sqlite.h"
 #include "time.h"
+#include "utils.h"
 #include <chrono>
 #include <cstddef>
 #include <iostream>
@@ -38,9 +39,10 @@ int main() {
   dao.GetAllMessage("Her");
 
   auto headers = dao.GetHeaders();
-  for(auto&&[author, vec] : headers){
-    for(auto& i : vec){
+  for (auto &&[author, vec] : headers) {
+    for (auto &i : vec) {
       printf("%s: %lld - %lld\n", author.c_str(), i.start, i.len);
     }
   }
+  replikon::IntervalsDifference({{1, 2}, {2, 1}}, {});
 }
