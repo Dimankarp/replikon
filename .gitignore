@@ -7,3 +7,6 @@ build/
 
 # Misc
 compile_commands.json
+
+# Vscode
+.vscode/

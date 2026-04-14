@@ -15,6 +15,11 @@ const static std::string INDEX_MESSAGES =
     "CREATE UNIQUE INDEX IF NOT EXISTS idx_messages_lamport "
     "ON messages (id, lamport)";
 
+const static std::string TEMP_SEARCH_INTERVALS =
+    "CREATE TEMP TABLE search_intervals "
+    "(start INTEGER, end INTEGER)";
+
+    
 } // namespace replikon
 
 #endif // REPLIKON_CONSTANTS_H

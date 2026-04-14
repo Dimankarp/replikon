@@ -29,14 +29,15 @@ int main() {
   std::cout << res << "\n";
   res = sqlite3_exec(db->Get(), replikon::INDEX_MESSAGES.c_str(), nullptr,
                      nullptr, &err);
-  replikon::dao::Messages dao{db};
   std::cout << res << "\n";
-  for (int i = 0; i < 10; i++)
-    dao.InsertMessage(
-        "her", "This is my body!!!",
-        std::chrono::system_clock::now().time_since_epoch().count());
-  dao.GetAllMessage("me");
-  dao.GetAllMessage("Her");
+  res = sqlite3_exec(db->Get(), replikon::TEMP_SEARCH_INTERVALS.c_str(),
+                     nullptr, nullptr, &err);
+  std::cout << res << "\n";
+  replikon::dao::Messages dao{db};
+
+  dao.NewMessage("me", "1", 1);
+  dao.NewMessage("me", "2", 1);
+  dao.NewMessage("me", "3", 1);
 
   auto headers = dao.GetHeaders();
   for (auto &&[author, vec] : headers) {
@@ -44,5 +45,9 @@ int main() {
       printf("%s: %lld - %lld\n", author.c_str(), i.start, i.len);
     }
   }
-  replikon::IntervalsDifference({{1, 2}, {2, 1}}, {});
+
+  auto msgs = dao.GetAllMessages("me", {{65, 3}});
+  for (auto &i : msgs) {
+    printf("Message: %s\n", i.body.c_str());
+  }
 }
