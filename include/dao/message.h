@@ -1,8 +1,8 @@
 #ifndef REPLIKON_DAO_MESSAGE_H
 #define REPLIKON_DAO_MESSAGE_H
 
+#include "expected.h"
 #include "sqlite.h"
-#include "sqlite3.h"
 #include "types.h"
 #include "utils.h"
 #include <cstdint>
@@ -51,97 +51,100 @@ static const std::string GET_MSGS_BY_INTERVALS =
 class Messages {
 
 public:
-  Messages(std::shared_ptr<db::Sqlite> db) : _db{db} {}
+  Messages(std::shared_ptr<db::Sqlite> db) : _db{db} {
+    // empty
+  }
 
-  std::vector<ChatMessage>
+  Expected<std::vector<ChatMessage>, db::SqliteError>
   GetAllMessages(const std::string &author,
-                const std::vector<Interval> &intervals) const {
-    sqlite3_exec(_db->Get(), internal::CLEAR_INTERVALS.c_str(), nullptr,
-                 nullptr, nullptr);
+                 const std::vector<Interval> &intervals) const {
+    auto statement_res = _db->PrepareStatement(internal::CLEAR_INTERVALS);
+    RETURN_IF_ERROR(statement_res);
+    auto res = std::move(statement_res).value().Step();
+    RETURN_IF_RESULT_ERROR(res, db::SqliteError{});
 
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(_db->Get(), internal::INSERT_INTO_INTERVALS.c_str(),
-                       internal::INSERT_INTO_INTERVALS.size(), &stmt, nullptr);
+    statement_res = _db->PrepareStatement(internal::INSERT_INTO_INTERVALS);
+    RETURN_IF_ERROR(statement_res);
+    db::PreparedStatement insert_into_intervals =
+        std::move(statement_res).value();
+
     for (auto [start, len] : intervals) {
       auto end = start + len - 1;
-      sqlite3_bind_int64(stmt, 1, start);
-      sqlite3_bind_int64(stmt, 2, end);
-      sqlite3_step(stmt);
-      sqlite3_reset(stmt);
+      res |= insert_into_intervals.BindInt64(1, start);
+      res |= insert_into_intervals.BindInt64(2, end);
+      res |= insert_into_intervals.Step();
+      res |= insert_into_intervals.Reset();
+      RETURN_IF_RESULT_ERROR(res, db::SqliteError{});
     }
 
-    sqlite3_stmt *stmt_get_all;
-    sqlite3_prepare_v2(_db->Get(), internal::GET_MSGS_BY_INTERVALS.c_str(),
-                       internal::GET_MSGS_BY_INTERVALS.size(), &stmt_get_all,
-                       nullptr);
-    sqlite3_bind_text(stmt_get_all, 1, author.c_str(), author.size(),
-                      SQLITE_STATIC);
+    statement_res = _db->PrepareStatement(internal::GET_MSGS_BY_INTERVALS);
+    RETURN_IF_ERROR(statement_res);
+    db::PreparedStatement get_msgs_by_intervals =
+        std::move(statement_res).value();
+    res |= get_msgs_by_intervals.BindText(1, author);
 
     std::vector<ChatMessage> messages;
-    while (sqlite3_step(stmt_get_all) == SQLITE_ROW) {
-      const unsigned char *author_val = sqlite3_column_text(stmt_get_all, 0);
-      const unsigned char *body_val = sqlite3_column_text(stmt_get_all, 1);
-      int64_t origin_ts = sqlite3_column_int64(stmt_get_all, 2);
-      int64_t lamport = sqlite3_column_int64(stmt_get_all, 3);
-      messages.push_back({
-          author_val ? std::string{(const char *)author_val} : std::string{},
-          static_cast<uint64_t>(lamport),
-          static_cast<uint64_t>(origin_ts),
-          body_val ? std::string{(const char *)body_val} : std::string{},
-      });
+    while (get_msgs_by_intervals.Step() == db::SqliteResult::OK) {
+      std::string author_val = get_msgs_by_intervals.ColumnText(0);
+      std::string body_val = get_msgs_by_intervals.ColumnText(1);
+      int64_t origin_ts = get_msgs_by_intervals.ColumnInt64(2);
+      int64_t lamport = get_msgs_by_intervals.ColumnInt64(3);
+      messages.push_back({author_val, static_cast<uint64_t>(lamport),
+                          static_cast<uint64_t>(origin_ts), body_val});
     }
-    sqlite3_finalize(stmt);
-    sqlite3_finalize(stmt_get_all);
     return messages;
   }
 
-  void InsertMessage(const ChatMessage &message) {
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(_db->Get(), internal::INSERT_MESSAGE.c_str(),
-                       internal::INSERT_MESSAGE.size(), &stmt, nullptr);
-    sqlite3_bind_text(stmt, 1, message.author.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 2, message.body.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_int64(stmt, 3, message.lamport);
-    sqlite3_bind_int64(stmt, 4, message.origin_ts);
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
+  db::SqliteResult InsertMessage(const ChatMessage &message) {
+    auto statement_res = _db->PrepareStatement(internal::INSERT_MESSAGE);
+    if (!statement_res.hasValue()) {
+      return db::SqliteResult::ERROR;
+    }
+    db::PreparedStatement insert_message = std::move(statement_res).value();
+    db::SqliteResult res;
+    res |= insert_message.BindText(1, message.author);
+    res |= insert_message.BindText(2, message.body);
+    res |= insert_message.BindInt64(3, message.lamport);
+    res |= insert_message.BindInt64(4, message.origin_ts);
+    res |= insert_message.Step();
+    return res;
   }
 
-  void NewMessage(const std::string &author, const std::string &body,
-                  uint64_t origin_ts) {
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(_db->Get(), internal::NEW_MESSAGE.c_str(),
-                       internal::NEW_MESSAGE.size(), &stmt, nullptr);
-    sqlite3_bind_text(stmt, 1, author.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 2, body.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_int64(stmt, 3, origin_ts);
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
+  db::SqliteResult NewMessage(const std::string &author,
+                              const std::string &body, uint64_t origin_ts) {
+    auto statement_res = _db->PrepareStatement(internal::NEW_MESSAGE);
+    if (!statement_res.hasValue()) {
+      return db::SqliteResult::ERROR;
+    }
+    db::PreparedStatement insert_message = std::move(statement_res).value();
+    db::SqliteResult res;
+    res |= insert_message.BindText(1, author);
+    res |= insert_message.BindText(2, body);
+    res |= insert_message.BindInt64(3, origin_ts);
+    res |= insert_message.Step();
+    return res;
   }
 
-  std::map<std::string, std::vector<Interval>> GetHeaders() const {
+  Expected<std::map<std::string, std::vector<Interval>>, db::SqliteError>
+  GetHeaders() const {
     std::map<std::string, std::vector<Interval>> headers;
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(_db->Get(), internal::GET_HEADERS.c_str(),
-                       internal::GET_HEADERS.size(), &stmt, nullptr);
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-      const unsigned char *author_cstr = sqlite3_column_text(stmt, 0);
-      printf("Received %s\n", author_cstr);
-      int64_t lamport_start = sqlite3_column_int64(stmt, 1);
-      int64_t lamport_end = sqlite3_column_int64(stmt, 2);
+    auto statement_res = _db->PrepareStatement(internal::GET_HEADERS);
+    RETURN_IF_ERROR(statement_res);
+    db::PreparedStatement get_headers = std::move(statement_res).value();
+
+    while (get_headers.Step() == db::SqliteResult::ROW) {
+      std::string author_val = get_headers.ColumnText(0);
+      int64_t lamport_start = get_headers.ColumnInt64(1);
+      int64_t lamport_end = get_headers.ColumnInt64(2);
       Interval interval = {
           static_cast<uint64_t>(lamport_start),
           static_cast<uint64_t>(lamport_end - lamport_start + 1)};
-      std::string author{(const char *)author_cstr};
-      headers[author].push_back(interval);
+      headers[author_val].push_back(interval);
     }
-    sqlite3_finalize(stmt);
     return headers;
   }
 
 private:
-  // TODO: maybe do lazy prepared statements;
-
   std::shared_ptr<db::Sqlite> _db;
 };
 

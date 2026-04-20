@@ -5,9 +5,11 @@
 #include <utility>
 
 #define RETURN_IF_ERROR(expected)                                              \
-  if (!expected.hasValue()) {                                                  \
-    return expected;                                                           \
-  }
+  do {                                                                         \
+    if (!expected.hasValue()) {                                                \
+      return Unexpected{expected.error()};                                     \
+    }                                                                          \
+  } while (false)
 
 namespace replikon {
 

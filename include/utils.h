@@ -21,6 +21,15 @@
 
 #define REPLIKON_UNREACHABLE REPLIKON_ASSERT(false);
 
+
+#define RETURN_IF_RESULT_ERROR(result, error)                                              \
+  do {                                                                         \
+    if (result != replikon::db::SqliteResult::OK) {                                                \
+      return Unexpected{error};                                     \
+    }                                                                          \
+  } while (false)
+
+
 namespace replikon {
 enum class MergeStatus : uint8_t { MERGED, SKIPPED };
 
@@ -29,7 +38,7 @@ struct Interval {
   uint64_t len;
 };
 
-bool IsMonotonicNonColliding(const std::vector<Interval> &a) {
+inline bool IsMonotonicNonColliding(const std::vector<Interval> &a) {
   for (int i = 0; i < a.size() - 1; i++) {
     if (a[i].len == 0)
       return false;
@@ -41,7 +50,7 @@ bool IsMonotonicNonColliding(const std::vector<Interval> &a) {
   return true;
 }
 
-std::vector<Interval> IntervalsDifference(std::vector<Interval> a_vec,
+inline std::vector<Interval> IntervalsDifference(std::vector<Interval> a_vec,
                                           const std::vector<Interval> &b_vec) {
   REPLIKON_ASSERT(IsMonotonicNonColliding(a_vec));
   REPLIKON_ASSERT(IsMonotonicNonColliding(b_vec));
