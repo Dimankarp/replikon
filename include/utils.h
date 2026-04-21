@@ -21,14 +21,12 @@
 
 #define REPLIKON_UNREACHABLE REPLIKON_ASSERT(false);
 
-
-#define RETURN_IF_RESULT_ERROR(result, error)                                              \
+#define RETURN_IF_RESULT_ERROR(result, error)                                  \
   do {                                                                         \
-    if (result != replikon::db::SqliteResult::OK) {                                                \
-      return Unexpected{error};                                     \
+    if (result != replikon::db::SqliteResult::OK) {                            \
+      return Unexpected{error};                                                \
     }                                                                          \
   } while (false)
-
 
 namespace replikon {
 enum class MergeStatus : uint8_t { MERGED, SKIPPED };
@@ -39,6 +37,10 @@ struct Interval {
 };
 
 inline bool IsMonotonicNonColliding(const std::vector<Interval> &a) {
+  if (a.empty()) {
+    return true;
+  }
+
   for (int i = 0; i < a.size() - 1; i++) {
     if (a[i].len == 0)
       return false;
@@ -50,8 +52,9 @@ inline bool IsMonotonicNonColliding(const std::vector<Interval> &a) {
   return true;
 }
 
-inline std::vector<Interval> IntervalsDifference(std::vector<Interval> a_vec,
-                                          const std::vector<Interval> &b_vec) {
+inline std::vector<Interval>
+IntervalsDifference(std::vector<Interval> a_vec,
+                    const std::vector<Interval> &b_vec) {
   REPLIKON_ASSERT(IsMonotonicNonColliding(a_vec));
   REPLIKON_ASSERT(IsMonotonicNonColliding(b_vec));
 
@@ -65,6 +68,7 @@ inline std::vector<Interval> IntervalsDifference(std::vector<Interval> a_vec,
   while (a_it != a_end) {
     if (b_it == b_end) {
       result.push_back(*a_it++);
+      continue;
     }
     auto a_start = a_it->start;
     auto a_end = a_start + a_it->len - 1;

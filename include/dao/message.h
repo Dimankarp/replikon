@@ -15,9 +15,7 @@ namespace internal {
 
 static const std::string INSERT_MESSAGE =
     "INSERT OR IGNORE INTO messages (author, body, origin_ts, lamport) "
-    "SELECT ?1, ?2, ?3, ?4 "
-    "FROM messages "
-    "WHERE author = ?1";
+    "VALUES (?1, ?2, ?3, ?4) ";
 
 static const std::string NEW_MESSAGE =
     "INSERT OR IGNORE INTO messages (author, body, origin_ts, lamport) "
@@ -84,7 +82,7 @@ public:
     res |= get_msgs_by_intervals.BindText(1, author);
 
     std::vector<ChatMessage> messages;
-    while (get_msgs_by_intervals.Step() == db::SqliteResult::OK) {
+    while (get_msgs_by_intervals.Step() == db::SqliteResult::ROW) {
       std::string author_val = get_msgs_by_intervals.ColumnText(0);
       std::string body_val = get_msgs_by_intervals.ColumnText(1);
       int64_t origin_ts = get_msgs_by_intervals.ColumnInt64(2);
@@ -104,8 +102,8 @@ public:
     db::SqliteResult res;
     res |= insert_message.BindText(1, message.author);
     res |= insert_message.BindText(2, message.body);
-    res |= insert_message.BindInt64(3, message.lamport);
-    res |= insert_message.BindInt64(4, message.origin_ts);
+    res |= insert_message.BindInt64(3, message.origin_ts);
+    res |= insert_message.BindInt64(4, message.lamport);
     res |= insert_message.Step();
     return res;
   }
