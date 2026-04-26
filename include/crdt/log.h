@@ -2,6 +2,7 @@
 #define REPLIKON_CRDT_LOG_H
 
 #include "dao/message.h"
+#include "logging.h"
 #include "traits/crdt.h"
 #include "types.h"
 #include "utils.h"
@@ -16,9 +17,13 @@ public:
   using Request = Header;
   using Update = std::map<std::string, std::vector<Value>>;
 
-  Log(std::shared_ptr<dao::Messages> messages_dao) : _messages_dao(std::move(messages_dao)) {}
+  Log(std::shared_ptr<dao::Messages> messages_dao)
+      : _messages_dao(std::move(messages_dao)) {}
 
-  Header GetHeader() const { return _messages_dao->GetHeaders().value(); }
+  Header GetHeader() const {
+    LOGI("Request header");
+    return _messages_dao->GetHeaders().value();
+  }
   Request GetRequest(Header header) const {
     auto local_header = _messages_dao->GetHeaders().value();
     Request result;

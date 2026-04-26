@@ -2,16 +2,20 @@
 #include "crdt/map.h"
 #include "crdt/register.h"
 #include "dao/message.h"
+#include "logging.h"
 #include "sqlite.h"
 #include "time.h"
 #include "utils.h"
 #include <chrono>
 #include <cstddef>
+#include <cstdio>
 #include <iostream>
 #include <memory>
 using namespace replikon::crdt;
 
 int main() {
+  auto log_file = fopen("app.log", "w");
+  replikon::SetLogFile(log_file);
   MapCRDT<std::string, Register<int>> crdt;
   crdt.LocalUpdate("me", 20);
   crdt.LocalUpdate("Her", 30);
@@ -19,7 +23,7 @@ int main() {
   auto h = crdt.GetHeader();
   auto r = crdt.GetRequest(h);
   auto u = crdt.GetUpdate(r);
-
+  replikon::LOGE("This is an error! %s", u.back().first.c_str());
   auto db = std::make_shared<replikon::db::Sqlite>();
   auto res = db->Connect(".db/file.sqlite");
   std::cout << ToString(res) << "\n";
