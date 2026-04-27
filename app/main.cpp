@@ -3,8 +3,10 @@
 #include "crdt/register.h"
 #include "dao/message.h"
 #include "logging.h"
+#include "serial/serde.h"
 #include "sqlite.h"
 #include "time.h"
+#include "types.h"
 #include "utils.h"
 #include <chrono>
 #include <cstddef>
@@ -16,6 +18,16 @@ using namespace replikon::crdt;
 int main() {
   auto log_file = fopen("app.log", "w");
   replikon::SetLogFile(log_file);
+
+  replikon::ChatMessage msg{"me", 10, 10, "body"};
+  replikon::serde::Buffer buf;
+  replikon::serde::serialize(buf, msg);
+  replikon::ChatMessage m =
+      *replikon::serde::deserialize<replikon::ChatMessage>(buf);
+
+  replikon::LOGI("%s, %d, %d, %s", msg.author.c_str(), msg.lamport,
+                 msg.origin_ts, msg.body.c_str());
+
   MapCRDT<std::string, Register<int>> crdt;
   crdt.LocalUpdate("me", 20);
   crdt.LocalUpdate("Her", 30);

@@ -1,6 +1,7 @@
 #ifndef REPLIKON_TYPES_H
 #define REPLIKON_TYPES_H
 
+#include "serial/serde.h"
 #include <cstdint>
 #include <string>
 namespace replikon {
@@ -13,5 +14,7 @@ struct ChatMessage {
 };
 
 } // namespace replikon
+
+SERIALIZABLE(replikon::ChatMessage, 4);
 
 #endif // REPLIKON_TYPES_H
