@@ -54,86 +54,86 @@ public:
   }
 
   Expected<std::vector<ChatMessage>, db::SqliteError>
-  GetAllMessages(const std::string &author,
+  getAllMessages(const std::string &author,
                  const std::vector<Interval> &intervals) const {
-    auto statement_res = _db->PrepareStatement(internal::CLEAR_INTERVALS);
+    auto statement_res = _db->prepareStatement(internal::CLEAR_INTERVALS);
     RETURN_IF_ERROR(statement_res);
-    auto res = std::move(statement_res).value().Step();
+    auto res = std::move(statement_res).value().step();
     RETURN_IF_RESULT_ERROR(res, db::SqliteError{});
 
-    statement_res = _db->PrepareStatement(internal::INSERT_INTO_INTERVALS);
+    statement_res = _db->prepareStatement(internal::INSERT_INTO_INTERVALS);
     RETURN_IF_ERROR(statement_res);
     db::PreparedStatement insert_into_intervals =
         std::move(statement_res).value();
 
     for (auto [start, len] : intervals) {
       auto end = start + len - 1;
-      res |= insert_into_intervals.BindInt64(1, start);
-      res |= insert_into_intervals.BindInt64(2, end);
-      res |= insert_into_intervals.Step();
-      res |= insert_into_intervals.Reset();
+      res |= insert_into_intervals.bindInt64(1, start);
+      res |= insert_into_intervals.bindInt64(2, end);
+      res |= insert_into_intervals.step();
+      res |= insert_into_intervals.reset();
       RETURN_IF_RESULT_ERROR(res, db::SqliteError{});
     }
 
-    statement_res = _db->PrepareStatement(internal::GET_MSGS_BY_INTERVALS);
+    statement_res = _db->prepareStatement(internal::GET_MSGS_BY_INTERVALS);
     RETURN_IF_ERROR(statement_res);
     db::PreparedStatement get_msgs_by_intervals =
         std::move(statement_res).value();
-    res |= get_msgs_by_intervals.BindText(1, author);
+    res |= get_msgs_by_intervals.bindText(1, author);
 
     std::vector<ChatMessage> messages;
-    while (get_msgs_by_intervals.Step() == db::SqliteResult::ROW) {
-      std::string author_val = get_msgs_by_intervals.ColumnText(0);
-      std::string body_val = get_msgs_by_intervals.ColumnText(1);
-      int64_t origin_ts = get_msgs_by_intervals.ColumnInt64(2);
-      int64_t lamport = get_msgs_by_intervals.ColumnInt64(3);
+    while (get_msgs_by_intervals.step() == db::SqliteResult::ROW) {
+      std::string author_val = get_msgs_by_intervals.columnText(0);
+      std::string body_val = get_msgs_by_intervals.columnText(1);
+      int64_t origin_ts = get_msgs_by_intervals.columnInt64(2);
+      int64_t lamport = get_msgs_by_intervals.columnInt64(3);
       messages.push_back({author_val, static_cast<uint64_t>(lamport),
                           static_cast<uint64_t>(origin_ts), body_val});
     }
     return messages;
   }
 
-  db::SqliteResult InsertMessage(const ChatMessage &message) {
-    auto statement_res = _db->PrepareStatement(internal::INSERT_MESSAGE);
+  db::SqliteResult insertMessage(const ChatMessage &message) {
+    auto statement_res = _db->prepareStatement(internal::INSERT_MESSAGE);
     if (!statement_res.hasValue()) {
       return db::SqliteResult::ERROR;
     }
     db::PreparedStatement insert_message = std::move(statement_res).value();
     db::SqliteResult res;
-    res |= insert_message.BindText(1, message.author);
-    res |= insert_message.BindText(2, message.body);
-    res |= insert_message.BindInt64(3, message.origin_ts);
-    res |= insert_message.BindInt64(4, message.lamport);
-    res |= insert_message.Step();
+    res |= insert_message.bindText(1, message.author);
+    res |= insert_message.bindText(2, message.body);
+    res |= insert_message.bindInt64(3, message.origin_ts);
+    res |= insert_message.bindInt64(4, message.lamport);
+    res |= insert_message.step();
     return res;
   }
 
-  db::SqliteResult NewMessage(const std::string &author,
+  db::SqliteResult newMessage(const std::string &author,
                               const std::string &body, uint64_t origin_ts) {
-    auto statement_res = _db->PrepareStatement(internal::NEW_MESSAGE);
+    auto statement_res = _db->prepareStatement(internal::NEW_MESSAGE);
     if (!statement_res.hasValue()) {
       return db::SqliteResult::ERROR;
     }
     db::PreparedStatement insert_message = std::move(statement_res).value();
     db::SqliteResult res;
-    res |= insert_message.BindText(1, author);
-    res |= insert_message.BindText(2, body);
-    res |= insert_message.BindInt64(3, origin_ts);
-    res |= insert_message.Step();
+    res |= insert_message.bindText(1, author);
+    res |= insert_message.bindText(2, body);
+    res |= insert_message.bindInt64(3, origin_ts);
+    res |= insert_message.step();
     return res;
   }
 
   Expected<std::map<std::string, std::vector<Interval>>, db::SqliteError>
-  GetHeaders() const {
+  getHeaders() const {
     std::map<std::string, std::vector<Interval>> headers;
-    auto statement_res = _db->PrepareStatement(internal::GET_HEADERS);
+    auto statement_res = _db->prepareStatement(internal::GET_HEADERS);
     RETURN_IF_ERROR(statement_res);
     db::PreparedStatement get_headers = std::move(statement_res).value();
 
-    while (get_headers.Step() == db::SqliteResult::ROW) {
-      std::string author_val = get_headers.ColumnText(0);
-      int64_t lamport_start = get_headers.ColumnInt64(1);
-      int64_t lamport_end = get_headers.ColumnInt64(2);
+    while (get_headers.step() == db::SqliteResult::ROW) {
+      std::string author_val = get_headers.columnText(0);
+      int64_t lamport_start = get_headers.columnInt64(1);
+      int64_t lamport_end = get_headers.columnInt64(2);
       Interval interval = {
           static_cast<uint64_t>(lamport_start),
           static_cast<uint64_t>(lamport_end - lamport_start + 1)};

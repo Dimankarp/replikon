@@ -5,9 +5,9 @@
 namespace replikon {
 
 namespace {
-FILE *LOG_OUT = stderr;
+FILE *log_out = stderr;
 }
-void SetLogFile(FILE *file) { LOG_OUT = file; }
-FILE *GetLogFile() { return LOG_OUT; }
+void setLogFile(FILE *file) { log_out = file; }
+FILE *getLogFile() { return log_out; }
 
 } // namespace replikon

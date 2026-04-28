@@ -18,7 +18,7 @@ using namespace replikon::crdt;
 
 int main() {
   auto log_file = fopen("app.log", "w");
-  replikon::SetLogFile(log_file);
+  replikon::setLogFile(log_file);
   auto sodium_init_res = sodium_init();
   REPLIKON_ASSERT(sodium_init_res >= 0);
 
@@ -32,51 +32,51 @@ int main() {
                  msg.origin_ts, msg.body.c_str());
 
   MapCRDT<std::string, Register<int>> crdt;
-  crdt.LocalUpdate("me", 20);
-  crdt.LocalUpdate("Her", 30);
+  crdt.localUpdate("me", 20);
+  crdt.localUpdate("Her", 30);
 
-  auto h = crdt.GetHeader();
-  auto r = crdt.GetRequest(h);
-  auto u = crdt.GetUpdate(r);
+  auto h = crdt.getHeader();
+  auto r = crdt.getRequest(h);
+  auto u = crdt.getUpdate(r);
   replikon::LOGE("This is an error! %s", u.back().first.c_str());
   auto db = std::make_shared<replikon::db::Sqlite>();
-  auto res = db->Connect(".db/file.sqlite");
-  std::cout << ToString(res) << "\n";
+  auto res = db->connect(".db/file.sqlite");
+  std::cout << toString(res) << "\n";
 
-  auto exp = db->PrepareStatement(replikon::INIT_MESSAGES);
+  auto exp = db->prepareStatement(replikon::INIT_MESSAGES);
   auto statement = std::move(exp.value());
-  res = statement.Step();
-  std::cout << ToString(res) << "\n";
+  res = statement.step();
+  std::cout << toString(res) << "\n";
 
-  exp = db->PrepareStatement(replikon::INDEX_MESSAGES);
+  exp = db->prepareStatement(replikon::INDEX_MESSAGES);
   statement = std::move(exp.value());
-  res = statement.Step();
-  std::cout << ToString(res) << "\n";
+  res = statement.step();
+  std::cout << toString(res) << "\n";
 
-  exp = db->PrepareStatement(replikon::TEMP_SEARCH_INTERVALS);
+  exp = db->prepareStatement(replikon::TEMP_SEARCH_INTERVALS);
   statement = std::move(exp.value());
-  res = statement.Step();
-  std::cout << ToString(res) << "\n";
+  res = statement.step();
+  std::cout << toString(res) << "\n";
 
-  exp = db->PrepareStatement(replikon::INIT_SECURITY);
+  exp = db->prepareStatement(replikon::INIT_SECURITY);
   statement = std::move(exp.value());
-  res = statement.Step();
-  std::cout << ToString(res) << "\n";
+  res = statement.step();
+  std::cout << toString(res) << "\n";
 
   replikon::dao::MessagesDao dao{db};
 
-  dao.NewMessage("me", "1", 1);
-  dao.NewMessage("me", "2", 1);
-  dao.NewMessage("me", "3", 1);
+  dao.newMessage("me", "1", 1);
+  dao.newMessage("me", "2", 1);
+  dao.newMessage("me", "3", 1);
 
-  auto headers = dao.GetHeaders().value();
+  auto headers = dao.getHeaders().value();
   for (auto &&[author, vec] : headers) {
     for (auto &i : vec) {
       printf("%s: %lld - %lld\n", author.c_str(), i.start, i.len);
     }
   }
 
-  auto msgs = dao.GetAllMessages("me", {{65, 3}}).value();
+  auto msgs = dao.getAllMessages("me", {{65, 3}}).value();
   for (auto &i : msgs) {
     printf("Message: %s\n", i.body.c_str());
   }

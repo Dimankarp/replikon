@@ -17,15 +17,15 @@ public:
   using Request = std::monostate;
   using Update = Value;
 
-  Header GetHeader() const { return {}; }
-  Request GetRequest(Header) const { return {}; }
-  Update GetUpdate(Request) const { return _value; }
-  MergeStatus Merge(Update u) {
+  Header getHeader() const { return {}; }
+  Request getRequest(Header) const { return {}; }
+  Update getUpdate(Request) const { return _value; }
+  MergeStatus merge(Update u) {
     _value = u;
     return MergeStatus::MERGED;
   }
 
-  void LocalUpdate(Update u) { Merge(u); }
+  void localUpdate(Update u) { merge(u); }
 
 private:
   Value _value;

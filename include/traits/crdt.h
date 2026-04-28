@@ -10,7 +10,7 @@ template <typename T> struct CRDT {
   using Request = typename T::Request;
   using Update = typename T::Update;
   static_assert(
-      std::is_same_v<decltype(std::declval<T>().Merge(std::declval<Update>())),
+      std::is_same_v<decltype(std::declval<T>().merge(std::declval<Update>())),
                      replikon::MergeStatus>,
       "CRDT::Merge(Update) must return MergeStatus");
 };

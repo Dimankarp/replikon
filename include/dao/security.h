@@ -12,7 +12,7 @@ namespace replikon::dao {
 
 namespace internal {
 
-static const std::string INSERT_KEY_FUlL =
+static const std::string INSERT_KEY_F_UL_L =
     "INSERT OR REPLACE INTO security (author, public_key, private_key) "
     "VALUES (?1, ?2, ?3) ";
 static const std::string INSERT_KEY_PUBLIC_ONLY =
@@ -31,7 +31,7 @@ public:
     // empty
   }
 
-  db::SqliteResult InsertPublicKey(const Author &author,
+  db::SqliteResult insertPublicKey(const Author &author,
                                    const PubKey &pub_key) {
     auto statement_res =
         _db->PrepareStatement(internal::INSERT_KEY_PUBLIC_ONLY);
@@ -40,27 +40,27 @@ public:
     }
     db::PreparedStatement insert_message = std::move(statement_res).value();
     db::SqliteResult res;
-    res |= insert_message.BindText(1, author);
+    res |= insert_message.bindText(1, author);
     auto view = serde::BufferView{pub_key.data(), pub_key.size()};
-    res |= insert_message.BindBlob(2, view);
-    res |= insert_message.Step();
+    res |= insert_message.bindBlob(2, view);
+    res |= insert_message.step();
     return res;
   }
 
-  db::SqliteResult InsertAllKeys(const Author &author, const PubKey &pub_key,
+  db::SqliteResult insertAllKeys(const Author &author, const PubKey &pub_key,
                                  const PrivKey &priv_key) {
-    auto statement_res = _db->PrepareStatement(internal::INSERT_KEY_FUlL);
+    auto statement_res = _db->PrepareStatement(internal::INSERT_KEY_F_UL_L);
     if (!statement_res.hasValue()) {
       return db::SqliteResult::ERROR;
     }
     db::PreparedStatement insert_message = std::move(statement_res).value();
     db::SqliteResult res;
-    res |= insert_message.BindText(1, author);
+    res |= insert_message.bindText(1, author);
     auto view = serde::BufferView{pub_key.data(), pub_key.size()};
-    res |= insert_message.BindBlob(2, view);
+    res |= insert_message.bindBlob(2, view);
     view = serde::BufferView{priv_key.data(), priv_key.size()};
-    res |= insert_message.BindBlob(3, view);
-    res |= insert_message.Step();
+    res |= insert_message.bindBlob(3, view);
+    res |= insert_message.step();
     return res;
   }
 
@@ -71,18 +71,18 @@ public:
     RETURN_IF_ERROR(statement_res);
     db::PreparedStatement get_headers = std::move(statement_res).value();
 
-    auto res = get_headers.BindText(1, author);
+    auto res = get_headers.bindText(1, author);
     RETURN_IF_RESULT_ERROR(res, db::SqliteError{});
 
-    if (get_headers.Step() == db::SqliteResult::ROW) {
-      Author author_val = get_headers.ColumnText(0);
-      auto pub_key_val = get_headers.ColumnBlob(1);
+    if (get_headers.step() == db::SqliteResult::ROW) {
+      Author author_val = get_headers.columnText(0);
+      auto pub_key_val = get_headers.columnBlob(1);
       REPLIKON_ASSERT(pub_key_val);
 
       PubKey pub_key;
       std::memcpy(pub_key.data(), pub_key_val, pub_key.size());
 
-      auto priv_key_val = get_headers.ColumnBlob(2);
+      auto priv_key_val = get_headers.columnBlob(2);
       std::optional<PrivKey> priv_key = std::nullopt;
       if (priv_key_val) {
         PrivKey pk;

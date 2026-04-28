@@ -9,7 +9,7 @@
 
 namespace replikon::db {
 
-SqliteResult ToEnum(int code) {
+SqliteResult toEnum(int code) {
   switch (code) {
   case SQLITE_OK:
   case SQLITE_DONE:
@@ -21,59 +21,59 @@ SqliteResult ToEnum(int code) {
   }
 }
 
-[[nodiscard]] SqliteResult Sqlite::Connect(std::string filename) {
+[[nodiscard]] SqliteResult Sqlite::connect(std::string filename) {
   if (_conn != nullptr) {
-    return ToEnum(SQLITE_ERROR);
+    return toEnum(SQLITE_ERROR);
   }
   auto result = sqlite3_open(filename.c_str(), &_conn);
   if (result == SQLITE_OK) {
-    return ToEnum(result);
+    return toEnum(result);
   }
   sqlite3_close(_conn);
-  return ToEnum(SQLITE_ERROR);
+  return toEnum(SQLITE_ERROR);
 }
 
 [[nodiscard]] Expected<PreparedStatement, SqliteError>
-Sqlite::PrepareStatement(std::string statement) {
+Sqlite::prepareStatement(std::string statement) {
   sqlite3_stmt *stmt;
   auto result =
       sqlite3_prepare_v2(_conn, statement.c_str(), -1, &stmt, nullptr);
-  if (ToEnum(result) == SqliteResult::OK) {
+  if (toEnum(result) == SqliteResult::OK) {
     return PreparedStatement{stmt};
   }
   return Unexpected<SqliteError>{{}};
 }
 
-[[nodiscard]] SqliteResult PreparedStatement::Reset() {
-  return ToEnum(sqlite3_reset(_stmt));
+[[nodiscard]] SqliteResult PreparedStatement::reset() {
+  return toEnum(sqlite3_reset(_stmt));
 }
-[[nodiscard]] SqliteResult PreparedStatement::Step() {
-  return ToEnum(sqlite3_step(_stmt));
+[[nodiscard]] SqliteResult PreparedStatement::step() {
+  return toEnum(sqlite3_step(_stmt));
 }
 
-[[nodiscard]] SqliteResult PreparedStatement::BindInt64(uint index,
+[[nodiscard]] SqliteResult PreparedStatement::bindInt64(uint index,
                                                         int64_t arg) {
-  return ToEnum(sqlite3_bind_int64(_stmt, index, arg));
+  return toEnum(sqlite3_bind_int64(_stmt, index, arg));
 }
-[[nodiscard]] SqliteResult PreparedStatement::BindText(uint index,
+[[nodiscard]] SqliteResult PreparedStatement::bindText(uint index,
                                                        const std::string &arg) {
-  return ToEnum(
+  return toEnum(
       sqlite3_bind_text(_stmt, index, arg.c_str(), arg.size(), SQLITE_STATIC));
 }
 [[nodiscard]] SqliteResult
-PreparedStatement::BindBlob(uint index, const serde::BufferView view) {
-  return ToEnum(
+PreparedStatement::bindBlob(uint index, const serde::BufferView view) {
+  return toEnum(
       sqlite3_bind_blob(_stmt, index, view.data(), view.size(), SQLITE_STATIC));
 }
-std::string PreparedStatement::ColumnText(uint index) {
+std::string PreparedStatement::columnText(uint index) {
   auto res = (char *)sqlite3_column_text(_stmt, index);
   return res != nullptr ? std::string{res} : "";
 }
-int64_t PreparedStatement::ColumnInt64(uint index) {
+int64_t PreparedStatement::columnInt64(uint index) {
   return sqlite3_column_int64(_stmt, index);
 }
 
-const void *PreparedStatement::ColumnBlob(uint index) {
+const void *PreparedStatement::columnBlob(uint index) {
   return sqlite3_column_blob(_stmt, index);
 }
 

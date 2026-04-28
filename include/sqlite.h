@@ -11,7 +11,7 @@
 namespace replikon::db {
 
 enum class SqliteResult : char { OK, ERROR, ROW };
-SqliteResult ToEnum(int code);
+SqliteResult toEnum(int code);
 
 inline SqliteResult operator|(const SqliteResult a, const SqliteResult b) {
   if (a == SqliteResult::OK && b == SqliteResult::OK) {
@@ -26,7 +26,7 @@ inline SqliteResult &operator|=(SqliteResult &a, const SqliteResult b) {
 
 struct SqliteError {};
 
-inline std::string ToString(SqliteResult res) {
+inline std::string toString(SqliteResult res) {
   switch (res) {
   case SqliteResult::OK:
     return "OK";
@@ -56,14 +56,14 @@ public:
   ~PreparedStatement() { sqlite3_finalize(_stmt); }
 
 public:
-  [[nodiscard]] SqliteResult Reset();
-  [[nodiscard]] SqliteResult Step();
-  [[nodiscard]] SqliteResult BindInt64(uint index, int64_t arg);
-  [[nodiscard]] SqliteResult BindText(uint index, const std::string &arg);
-  [[nodiscard]] SqliteResult BindBlob(uint index, const serde::BufferView view);
-  std::string ColumnText(uint index);
-  int64_t ColumnInt64(uint index);
-  const void *ColumnBlob(uint index);
+  [[nodiscard]] SqliteResult reset();
+  [[nodiscard]] SqliteResult step();
+  [[nodiscard]] SqliteResult bindInt64(uint index, int64_t arg);
+  [[nodiscard]] SqliteResult bindText(uint index, const std::string &arg);
+  [[nodiscard]] SqliteResult bindBlob(uint index, const serde::BufferView view);
+  std::string columnText(uint index);
+  int64_t columnInt64(uint index);
+  const void *columnBlob(uint index);
 
 private:
   // TODO: Add state machine
@@ -81,9 +81,9 @@ public:
   operator bool() { return _conn != nullptr; }
 
 public:
-  [[nodiscard]] SqliteResult Connect(std::string filename);
+  [[nodiscard]] SqliteResult connect(std::string filename);
   [[nodiscard]] Expected<PreparedStatement, SqliteError>
-  PrepareStatement(std::string statement);
+  prepareStatement(std::string statement);
 
 private:
   sqlite3 *_conn = nullptr;

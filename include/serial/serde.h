@@ -51,7 +51,8 @@ template <typename T> inline std::optional<T> deserialize(BufferView &buf) {
 
 // Arithmetic
 template <typename T>
-struct Serializer<T, std::enable_if_t<std::is_arithmetic_v<T> || std::is_same_v<T, std::byte>>> {
+struct Serializer<T, std::enable_if_t<std::is_arithmetic_v<T> ||
+                                      std::is_same_v<T, std::byte>>> {
   static void serialize(Buffer &buf, const T &value) {
     const std::byte *ptr = reinterpret_cast<const std::byte *>(&value);
     buf.insert(buf.end(), ptr, ptr + sizeof(T));

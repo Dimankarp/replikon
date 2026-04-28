@@ -36,7 +36,7 @@ struct Interval {
   uint64_t len;
 };
 
-inline bool IsMonotonicNonColliding(const std::vector<Interval> &a) {
+inline bool isMonotonicNonColliding(const std::vector<Interval> &a) {
   if (a.empty()) {
     return true;
   }
@@ -53,10 +53,10 @@ inline bool IsMonotonicNonColliding(const std::vector<Interval> &a) {
 }
 
 inline std::vector<Interval>
-IntervalsDifference(std::vector<Interval> a_vec,
+intervalsDifference(std::vector<Interval> a_vec,
                     const std::vector<Interval> &b_vec) {
-  REPLIKON_ASSERT(IsMonotonicNonColliding(a_vec));
-  REPLIKON_ASSERT(IsMonotonicNonColliding(b_vec));
+  REPLIKON_ASSERT(isMonotonicNonColliding(a_vec));
+  REPLIKON_ASSERT(isMonotonicNonColliding(b_vec));
 
   auto a_it = a_vec.begin();
   auto a_end = a_vec.end();

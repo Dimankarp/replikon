@@ -19,37 +19,37 @@ public:
   using Update = std::vector<std::pair<K, typename ValueCRDT::Update>>;
   using ValueUpdate = typename ValueCRDT::Update;
 
-  Header GetHeader() const {
+  Header getHeader() const {
     Header header;
     for (auto &&[k, v] : _values) {
-      header.emplace_back(k, v.GetHeader());
+      header.emplace_back(k, v.getHeader());
     }
     return header;
   }
 
-  Request GetRequest(Header &header) {
+  Request getRequest(Header &header) {
     Request request;
     for (auto &&[k, head] : header) {
       auto &v = _values[k];
-      request.emplace_back(k, v.GetRequest(head));
+      request.emplace_back(k, v.getRequest(head));
     }
     return request;
   }
 
-  Update GetUpdate(Request &request) {
+  Update getUpdate(Request &request) {
     Update update;
     for (auto &&[k, req] : request) {
       auto &v = _values[k];
-      update.emplace_back(k, v.GetUpdate(req));
+      update.emplace_back(k, v.getUpdate(req));
     }
     return update;
   }
 
-  MergeStatus Merge(Update &update) {
+  MergeStatus merge(Update &update) {
     MergeStatus status = MergeStatus::MERGED;
     for (auto &&[k, upd] : update) {
       auto &v = _values[k];
-      auto s = v.Merge(upd);
+      auto s = v.merge(upd);
       if (s == MergeStatus::SKIPPED) {
         status = MergeStatus::SKIPPED;
       }
@@ -57,8 +57,8 @@ public:
     return status;
   }
 
-  void LocalUpdate(const K &key, ValueUpdate &&update) {
-    _values[key].LocalUpdate(update);
+  void localUpdate(const K &key, ValueUpdate &&update) {
+    _values[key].localUpdate(update);
   }
 
 private:

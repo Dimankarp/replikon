@@ -20,30 +20,30 @@ public:
   Log(std::shared_ptr<dao::MessagesDao> messages_dao)
       : _messages_dao(std::move(messages_dao)) {}
 
-  Header GetHeader() const {
+  Header getHeader() const {
     LOGI("Request header");
-    return _messages_dao->GetHeaders().value();
+    return _messages_dao->getHeaders().value();
   }
-  Request GetRequest(Header header) const {
-    auto local_header = _messages_dao->GetHeaders().value();
+  Request getRequest(Header header) const {
+    auto local_header = _messages_dao->getHeaders().value();
     Request result;
     for (auto &&[k, v] : header) {
-      result[k] = IntervalsDifference(std::move(v), local_header[k]);
+      result[k] = intervalsDifference(std::move(v), local_header[k]);
     }
     return result;
   }
-  Update GetUpdate(Request request) const {
+  Update getUpdate(Request request) const {
     Update update;
     for (auto &&[k, v] : request) {
-      update[k] = _messages_dao->GetAllMessages(k, v).value();
+      update[k] = _messages_dao->getAllMessages(k, v).value();
     }
     return update;
   }
 
-  MergeStatus Merge(Update update) {
+  MergeStatus merge(Update update) {
     for (auto &&[k, v] : update) {
       for (auto &m : v) {
-        auto res = _messages_dao->InsertMessage(m);
+        auto res = _messages_dao->insertMessage(m);
       }
     }
     return MergeStatus::MERGED;

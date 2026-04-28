@@ -9,7 +9,7 @@
 #include <sodium/crypto_generichash_blake2b.h>
 namespace replikon::sec {
 
-std::array<std::byte, HASH_LEN> BLAKE2bHash(serde::BufferView &buf) {
+std::array<std::byte, HASH_LEN> blakE2bHash(serde::BufferView &buf) {
   std::array<std::byte, HASH_LEN> result;
   auto res = crypto_generichash_blake2b(
       reinterpret_cast<unsigned char *>(result.data()), HASH_LEN,

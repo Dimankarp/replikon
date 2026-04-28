@@ -25,13 +25,13 @@ public:
 
 public:
   static std::pair<PubKey, PrivKey> generateKeys() {
-    PubKey pubK;
-    PrivKey privK;
+    PubKey pub_k;
+    PrivKey priv_k;
     auto res =
-        crypto_sign_keypair(reinterpret_cast<unsigned char *>(pubK.data()),
-                            reinterpret_cast<unsigned char *>(privK.data()));
+        crypto_sign_keypair(reinterpret_cast<unsigned char *>(pub_k.data()),
+                            reinterpret_cast<unsigned char *>(priv_k.data()));
     REPLIKON_ASSERT(res == 0);
-    return {std::move(pubK), std::move(privK)};
+    return {std::move(pub_k), std::move(priv_k)};
   }
 
   Signature sign(serde::BufferView view) const {

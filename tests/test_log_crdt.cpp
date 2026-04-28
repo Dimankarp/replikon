@@ -16,11 +16,11 @@ class LogCRDTTest : public ::testing::Test {
 protected:
   void SetUp() override {
     db1 = std::make_shared<db::Sqlite>();
-    db1->Connect(":memory:");
+    db1->connect(":memory:");
     initDb(db1);
 
     db2 = std::make_shared<db::Sqlite>();
-    db2->Connect(":memory:");
+    db2->connect(":memory:");
     initDb(db2);
 
     dao1 = std::make_shared<dao::MessagesDao>(db1);
@@ -31,9 +31,9 @@ protected:
   }
 
   void initDb(std::shared_ptr<db::Sqlite> &db) {
-    db->PrepareStatement(INIT_MESSAGES).value().Step();
-    db->PrepareStatement(INDEX_MESSAGES).value().Step();
-    db->PrepareStatement(TEMP_SEARCH_INTERVALS).value().Step();
+    db->prepareStatement(INIT_MESSAGES).value().step();
+    db->prepareStatement(INDEX_MESSAGES).value().step();
+    db->prepareStatement(TEMP_SEARCH_INTERVALS).value().step();
   }
 
   std::shared_ptr<db::Sqlite> db1, db2;
@@ -42,26 +42,26 @@ protected:
 };
 
 TEST_F(LogCRDTTest, SyncBetweenTwoPeers) {
-  dao1->NewMessage("alice", "Hello from Alice", 100);
-  dao1->NewMessage("ivan", "Hello from Ivan1", 50);
-  dao1->NewMessage("ivan", "Hello from Ivan2", 51);
-  dao2->NewMessage("bob", "Hi from Bob", 101);
-  dao2->NewMessage("bob", "Hi from Bob", 103);
-  dao2->NewMessage("bob", "Hi from Bob", 105);
+  dao1->newMessage("alice", "Hello from Alice", 100);
+  dao1->newMessage("ivan", "Hello from Ivan1", 50);
+  dao1->newMessage("ivan", "Hello from Ivan2", 51);
+  dao2->newMessage("bob", "Hi from Bob", 101);
+  dao2->newMessage("bob", "Hi from Bob", 103);
+  dao2->newMessage("bob", "Hi from Bob", 105);
 
-  auto log1_headers = log1->GetHeader();
-  auto req_from_2_to_1 = log2->GetRequest(log1_headers);
-  auto update_from_1_for_2 = log1->GetUpdate(req_from_2_to_1);
+  auto log1_headers = log1->getHeader();
+  auto req_from_2_to_1 = log2->getRequest(log1_headers);
+  auto update_from_1_for_2 = log1->getUpdate(req_from_2_to_1);
 
-  auto res = log2->Merge(update_from_1_for_2);
+  auto res = log2->merge(update_from_1_for_2);
 
-  auto log2_headers = log2->GetHeader();
-  auto req_from_1_to_2 = log1->GetRequest(log2_headers);
-  auto update_from_2_for_1 = log2->GetUpdate(req_from_1_to_2);
-  log1->Merge(update_from_2_for_1);
+  auto log2_headers = log2->getHeader();
+  auto req_from_1_to_2 = log1->getRequest(log2_headers);
+  auto update_from_2_for_1 = log2->getUpdate(req_from_1_to_2);
+  log1->merge(update_from_2_for_1);
 
-  auto final_log1_headers = log1->GetHeader();
-  auto final_log2_headers = log2->GetHeader();
+  auto final_log1_headers = log1->getHeader();
+  auto final_log2_headers = log2->getHeader();
 
   ASSERT_EQ(final_log1_headers.size(), 3);
   ASSERT_EQ(final_log2_headers.size(), 3);
