@@ -23,8 +23,8 @@ protected:
     db2->Connect(":memory:");
     initDb(db2);
 
-    dao1 = std::make_shared<dao::Messages>(db1);
-    dao2 = std::make_shared<dao::Messages>(db2);
+    dao1 = std::make_shared<dao::MessagesDao>(db1);
+    dao2 = std::make_shared<dao::MessagesDao>(db2);
 
     log1 = std::make_unique<Log<ChatMessage>>(dao1);
     log2 = std::make_unique<Log<ChatMessage>>(dao2);
@@ -37,7 +37,7 @@ protected:
   }
 
   std::shared_ptr<db::Sqlite> db1, db2;
-  std::shared_ptr<dao::Messages> dao1, dao2;
+  std::shared_ptr<dao::MessagesDao> dao1, dao2;
   std::unique_ptr<Log<ChatMessage>> log1, log2;
 };
 

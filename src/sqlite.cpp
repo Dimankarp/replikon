@@ -3,6 +3,7 @@
 
 #include "sqlite.h"
 #include "expected.h"
+#include "serial/serde.h"
 #include "sqlite3.h"
 #include <variant>
 
@@ -14,7 +15,7 @@ SqliteResult ToEnum(int code) {
   case SQLITE_DONE:
     return SqliteResult::OK;
   case SQLITE_ROW:
-  return SqliteResult::ROW;
+    return SqliteResult::ROW;
   default:
     return SqliteResult::ERROR;
   }
@@ -59,12 +60,21 @@ Sqlite::PrepareStatement(std::string statement) {
   return ToEnum(
       sqlite3_bind_text(_stmt, index, arg.c_str(), arg.size(), SQLITE_STATIC));
 }
+[[nodiscard]] SqliteResult
+PreparedStatement::BindBlob(uint index, const serde::BufferView view) {
+  return ToEnum(
+      sqlite3_bind_blob(_stmt, index, view.data(), view.size(), SQLITE_STATIC));
+}
 std::string PreparedStatement::ColumnText(uint index) {
   auto res = (char *)sqlite3_column_text(_stmt, index);
   return res != nullptr ? std::string{res} : "";
 }
 int64_t PreparedStatement::ColumnInt64(uint index) {
   return sqlite3_column_int64(_stmt, index);
+}
+
+const void *PreparedStatement::ColumnBlob(uint index) {
+  return sqlite3_column_blob(_stmt, index);
 }
 
 } // namespace replikon::db

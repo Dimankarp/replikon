@@ -1,0 +1,25 @@
+#ifndef REPLIKON_SECURITY_HASHING_H
+#define REPLIKON_SECURITY_HASHING_H
+
+#include "constants.h"
+#include "serial/serde.h"
+#include "utils.h"
+#include <array>
+#include <cstddef>
+#include <sodium/crypto_generichash_blake2b.h>
+namespace replikon::sec {
+
+std::array<std::byte, HASH_LEN> BLAKE2bHash(serde::BufferView &buf) {
+  std::array<std::byte, HASH_LEN> result;
+  auto res = crypto_generichash_blake2b(
+      reinterpret_cast<unsigned char *>(result.data()), HASH_LEN,
+      reinterpret_cast<const unsigned char *>(buf.data()), buf.size(), nullptr,
+      0);
+  buf.consume(buf.size());
+  REPLIKON_ASSERT(res == 0);
+  return result;
+}
+
+} // namespace replikon::sec
+
+#endif // REPLIKON_SECURITY_HASHING_H

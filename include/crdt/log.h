@@ -17,7 +17,7 @@ public:
   using Request = Header;
   using Update = std::map<std::string, std::vector<Value>>;
 
-  Log(std::shared_ptr<dao::Messages> messages_dao)
+  Log(std::shared_ptr<dao::MessagesDao> messages_dao)
       : _messages_dao(std::move(messages_dao)) {}
 
   Header GetHeader() const {
@@ -50,7 +50,7 @@ public:
   }
 
 private:
-  std::shared_ptr<dao::Messages> _messages_dao;
+  std::shared_ptr<dao::MessagesDao> _messages_dao;
 };
 
 static_assert(traits::IsCRDT<Log<ChatMessage>>::value,

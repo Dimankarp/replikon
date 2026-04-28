@@ -13,11 +13,14 @@
 #include <cstdio>
 #include <iostream>
 #include <memory>
+#include <sodium/core.h>
 using namespace replikon::crdt;
 
 int main() {
   auto log_file = fopen("app.log", "w");
   replikon::SetLogFile(log_file);
+  auto sodium_init_res = sodium_init();
+  REPLIKON_ASSERT(sodium_init_res >= 0);
 
   replikon::ChatMessage msg{"me", 10, 10, "body"};
   replikon::serde::Buffer buf;
@@ -55,7 +58,12 @@ int main() {
   res = statement.Step();
   std::cout << ToString(res) << "\n";
 
-  replikon::dao::Messages dao{db};
+  exp = db->PrepareStatement(replikon::INIT_SECURITY);
+  statement = std::move(exp.value());
+  res = statement.Step();
+  std::cout << ToString(res) << "\n";
+
+  replikon::dao::MessagesDao dao{db};
 
   dao.NewMessage("me", "1", 1);
   dao.NewMessage("me", "2", 1);

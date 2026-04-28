@@ -2,6 +2,7 @@
 #define REPLIKON_SQLITE_H
 
 #include "expected.h"
+#include "serial/serde.h"
 #include "sqlite3.h"
 #include "utils.h"
 #include <string>
@@ -59,8 +60,10 @@ public:
   [[nodiscard]] SqliteResult Step();
   [[nodiscard]] SqliteResult BindInt64(uint index, int64_t arg);
   [[nodiscard]] SqliteResult BindText(uint index, const std::string &arg);
+  [[nodiscard]] SqliteResult BindBlob(uint index, const serde::BufferView view);
   std::string ColumnText(uint index);
   int64_t ColumnInt64(uint index);
+  const void *ColumnBlob(uint index);
 
 private:
   // TODO: Add state machine

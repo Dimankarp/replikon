@@ -1,13 +1,68 @@
 #ifndef REPLIKON_SECURITY_PROVIDER_H
 #define REPLIKON_SECURITY_PROVIDER_H
 
+#include "dao/security.h"
+#include "serial/serde.h"
 #include "sodium.h"
+#include "types.h"
+#include "utils.h"
+#include <memory>
+#include <sodium/crypto_sign.h>
+#include <sodium/crypto_sign_ed25519.h>
+#include <string>
+namespace replikon::sec {
+class ED25519SecurityProvider {
+public:
+  using Author = Author;
+  using PubKey = PubKey;
+  using PrivKey = PrivKey;
+  using Signature = Signature;
 
-// template<typename A>
-// class SecurityProvider {
-//     using Author = A;
-//     using
+  ED25519SecurityProvider(std::shared_ptr<dao::SecurityDao> dao, Author self,
+                          PubKey self_pub_key, PrivKey self_priv_key)
+      : _dao{dao}, _self{self}, _self_pub_key{self_pub_key},
+        _self_priv_key{self_priv_key} {}
 
-// };
+public:
+  static std::pair<PubKey, PrivKey> generateKeys() {
+    PubKey pubK;
+    PrivKey privK;
+    auto res =
+        crypto_sign_keypair(reinterpret_cast<unsigned char *>(pubK.data()),
+                            reinterpret_cast<unsigned char *>(privK.data()));
+    REPLIKON_ASSERT(res == 0);
+    return {std::move(pubK), std::move(privK)};
+  }
 
+  Signature sign(serde::BufferView view) const {
+    Signature s;
+    auto res = crypto_sign_detached(
+        reinterpret_cast<unsigned char *>(s.data()), nullptr,
+        reinterpret_cast<const unsigned char *>(view.data()), view.size(),
+        reinterpret_cast<const unsigned char *>(_self_priv_key.data()));
+    REPLIKON_ASSERT(res == 0);
+    return s;
+  }
+
+  bool isValid(const Signature &s, serde::BufferView view,
+               const std::string &author) const {
+    auto user_info_res = _dao->getUserInfo(author);
+    if (!user_info_res.hasValue() || !user_info_res.value().has_value()) {
+      return false;
+    }
+    auto user_info = user_info_res.value().value();
+    auto res = crypto_sign_verify_detached(
+        reinterpret_cast<const unsigned char *>(s.data()),
+        reinterpret_cast<const unsigned char *>(view.data()), view.size(),
+        reinterpret_cast<const unsigned char *>(user_info.pub_key.data()));
+    return res == 0;
+  }
+
+private:
+  std::shared_ptr<dao::SecurityDao> _dao;
+  Author _self;
+  PubKey _self_pub_key;
+  PrivKey _self_priv_key;
+};
+} // namespace replikon::sec
 #endif // REPLIKON_SECURITY_PROVIDER_H

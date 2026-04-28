@@ -46,10 +46,10 @@ static const std::string GET_MSGS_BY_INTERVALS =
 
 } // namespace internal
 
-class Messages {
+class MessagesDao {
 
 public:
-  Messages(std::shared_ptr<db::Sqlite> db) : _db{db} {
+  MessagesDao(std::shared_ptr<db::Sqlite> db) : _db{db} {
     // empty
   }
 
