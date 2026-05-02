@@ -19,6 +19,9 @@ class BufferView {
 public:
   BufferView(const std::byte *p, size_t sz) : _data{p}, _size{sz} {}
   BufferView(const Buffer &b) : _data{b.data()}, _size{b.size()} {}
+  template <size_t N>
+  BufferView(const std::array<std::byte, N> &arr)
+      : _data{arr.data()}, _size{arr.size()} {}
 
 public:
   const std::byte *data() const { return _data; }

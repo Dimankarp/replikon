@@ -4,6 +4,7 @@
 #include "constants.h"
 #include "crdt/log.h"
 #include "dao/message.h"
+#include "security/no_sec_provider.h"
 #include "sqlite.h"
 #include "utils.h"
 
@@ -26,8 +27,10 @@ protected:
     dao1 = std::make_shared<dao::MessagesDao>(db1);
     dao2 = std::make_shared<dao::MessagesDao>(db2);
 
-    log1 = std::make_unique<Log<ChatMessage>>(dao1);
-    log2 = std::make_unique<Log<ChatMessage>>(dao2);
+    log1 =
+        std::make_unique<crdt::Log<ChatMessage, sec::NoSecurityProvider>>(dao1);
+    log2 =
+        std::make_unique<crdt::Log<ChatMessage, sec::NoSecurityProvider>>(dao2);
   }
 
   void initDb(std::shared_ptr<db::Sqlite> &db) {
@@ -38,7 +41,7 @@ protected:
 
   std::shared_ptr<db::Sqlite> db1, db2;
   std::shared_ptr<dao::MessagesDao> dao1, dao2;
-  std::unique_ptr<Log<ChatMessage>> log1, log2;
+  std::unique_ptr<crdt::Log<ChatMessage, sec::NoSecurityProvider>> log1, log2;
 };
 
 TEST_F(LogCRDTTest, SyncBetweenTwoPeers) {

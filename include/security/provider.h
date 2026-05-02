@@ -34,8 +34,12 @@ public:
     return {std::move(pub_k), std::move(priv_k)};
   }
 
-  Signature sign(serde::BufferView view) const {
+  template <typename T> //
+  Signature sign(const T &value) const {
     Signature s;
+    serde::Buffer buf;
+    replikon::serde::serialize(buf, value);
+    serde::BufferView view{buf};
     auto res = crypto_sign_detached(
         reinterpret_cast<unsigned char *>(s.data()), nullptr,
         reinterpret_cast<const unsigned char *>(view.data()), view.size(),
@@ -44,13 +48,19 @@ public:
     return s;
   }
 
-  bool isValid(const Signature &s, serde::BufferView view,
-               const std::string &author) const {
+  template <typename T>
+  bool isValid(const Signature &s, const std::string &author,
+               const T &value) const {
     auto user_info_res = _dao->getUserInfo(author);
     if (!user_info_res.hasValue() || !user_info_res.value().has_value()) {
       return false;
     }
     auto user_info = user_info_res.value().value();
+
+    serde::Buffer buf;
+    replikon::serde::serialize(buf, value);
+    serde::BufferView view{buf};
+
     auto res = crypto_sign_verify_detached(
         reinterpret_cast<const unsigned char *>(s.data()),
         reinterpret_cast<const unsigned char *>(view.data()), view.size(),

@@ -77,5 +77,9 @@ const void *PreparedStatement::columnBlob(uint index) {
   return sqlite3_column_blob(_stmt, index);
 }
 
+size_t PreparedStatement::columnBytes(uint index) {
+  return sqlite3_column_bytes(_stmt, index);
+}
+
 } // namespace replikon::db
 #endif // REPLIKON_SQLITE_CPP

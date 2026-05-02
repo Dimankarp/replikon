@@ -20,13 +20,25 @@ const static std::string TEMP_SEARCH_INTERVALS =
     "CREATE TEMP TABLE search_intervals "
     "(start INTEGER, end INTEGER)";
 
-const static std::string INIT_SECURITY = "CREATE TABLE IF NOT EXISTS security ("
-                                         "id INTEGER PRIMARY KEY,"
-                                         "author TEXT UNIQUE NOT NULL,"
-                                         "public_key BLOB NOT NULL,"
-                                         "private_key BLOB)";
+const static std::string INIT_SECURITY =
+    "CREATE TABLE IF NOT EXISTS security ("
+    "id INTEGER PRIMARY KEY,"
+    "author TEXT UNIQUE NOT NULL,"
+    "public_key BLOB NOT NULL,"
+    "private_key BLOB,"
+    "is_admin INTEGER NOT NULL DEFAULT FALSE )";
+
+const static std::string INIT_KEY_VALUE =
+    "CREATE TABLE IF NOT EXISTS key_value ("
+    "id INTEGER PRIMARY KEY,"
+    "key TEXT UNIQUE NOT NULL,"
+    "value BLOB)";
 
 const size_t HASH_LEN = crypto_generichash_blake2b_BYTES;
+
+const std::string KEYS_CRDT_VERSION_KEY = "keys_crdt_version";
+const std::string KEYS_CRDT_SIGN_KEY = "keys_crdt_sign";
+const std::string ADMIN_AUTHOR_KEY = "admin_author";
 
 } // namespace replikon
 

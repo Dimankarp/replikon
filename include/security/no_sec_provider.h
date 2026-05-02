@@ -11,10 +11,14 @@ public:
   using PrivKey = std::monostate;
   using Signature = std::monostate;
 
-  Signature sign(serde::BufferView view) const { return {}; }
+  template <typename T> //
+  Signature sign(const T &value) const {
+    return {};
+  }
 
-  bool isValid(const Signature &s, serde::BufferView view,
-               const std::string &author) const {
+  template <typename T> //
+  bool isValid(const Signature &s, const std::string &author,
+               const T &value) const {
     return true;
   }
 };

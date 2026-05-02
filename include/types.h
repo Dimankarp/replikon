@@ -24,6 +24,7 @@ struct SecurityUserInfo {
   Author author;
   PubKey pub_key;
   std::optional<PrivKey> priv_key;
+  bool is_admin;
 };
 
 using Hash = std::array<std::byte, HASH_LEN>;
@@ -31,6 +32,6 @@ using Hash = std::array<std::byte, HASH_LEN>;
 } // namespace replikon
 
 SERIALIZABLE(replikon::ChatMessage, 4);
-SERIALIZABLE(replikon::SecurityUserInfo, 3);
+SERIALIZABLE(replikon::SecurityUserInfo, 4);
 
 #endif // REPLIKON_TYPES_H

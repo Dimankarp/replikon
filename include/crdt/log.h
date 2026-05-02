@@ -3,19 +3,24 @@
 
 #include "dao/message.h"
 #include "logging.h"
+#include "security/provider.h"
+#include "serial/serde.h"
+#include "sqlite.h"
 #include "traits/crdt.h"
 #include "types.h"
 #include "utils.h"
 #include <cstdint>
 #include <memory>
 #include <vector>
-namespace replikon {
+namespace replikon::crdt {
 
-template <typename Value> class Log {
+template <typename Value, typename SecurityProvider> class Log {
 public:
   using Header = std::map<std::string, std::vector<Interval>>;
   using Request = Header;
-  using Update = std::map<std::string, std::vector<Value>>;
+  using Signature = typename SecurityProvider::Signature;
+  using SignedValue = std::pair<Signature, Value>;
+  using Update = std::map<std::string, std::vector<SignedValue>>;
 
   Log(std::shared_ptr<dao::MessagesDao> messages_dao)
       : _messages_dao(std::move(messages_dao)) {}
@@ -41,21 +46,32 @@ public:
   }
 
   MergeStatus merge(Update update) {
+    bool merged = false;
     for (auto &&[k, v] : update) {
-      for (auto &m : v) {
-        auto res = _messages_dao->insertMessage(m);
+      for (auto &[sig, m] : v) {
+        auto is_valid = _security_provider->isValid(sig, k, m);
+        if (is_valid) {
+          auto res = _messages_dao->insertMessage(m);
+          merged |= res == db::SqliteResult::OK;
+        }
       }
     }
-    return MergeStatus::MERGED;
+    if (merged) {
+      return MergeStatus::MERGED;
+    } else {
+      return MergeStatus::SKIPPED;
+    }
   }
 
 private:
   std::shared_ptr<dao::MessagesDao> _messages_dao;
+  std::shared_ptr<SecurityProvider> _security_provider;
 };
 
-static_assert(traits::IsCRDT<Log<ChatMessage>>::value,
-              "Log must fulfill CRDT trait");
+static_assert(
+    traits::IsCRDT<Log<ChatMessage, sec::ED25519SecurityProvider>>::value,
+    "Log must fulfill CRDT trait");
 
-} // namespace replikon
+} // namespace replikon::crdt
 
 #endif // REPLIKON_CRDT_LOG_H

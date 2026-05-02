@@ -3,6 +3,7 @@
 #include "crdt/register.h"
 #include "dao/message.h"
 #include "logging.h"
+#include "security/provider.h"
 #include "serial/serde.h"
 #include "sqlite.h"
 #include "time.h"
@@ -59,6 +60,11 @@ int main() {
   std::cout << toString(res) << "\n";
 
   exp = db->prepareStatement(replikon::INIT_SECURITY);
+  statement = std::move(exp.value());
+  res = statement.step();
+  std::cout << toString(res) << "\n";
+
+  exp = db->prepareStatement(replikon::INIT_KEY_VALUE);
   statement = std::move(exp.value());
   res = statement.step();
   std::cout << toString(res) << "\n";
