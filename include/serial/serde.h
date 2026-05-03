@@ -98,6 +98,32 @@ template <> struct Serializer<std::string> {
   }
 };
 
+// Vector
+template <typename T> struct Serializer<std::vector<T>> {
+  static void serialize(Buffer &buf, const std::vector<T> &value) {
+    replikon::serde::serialize(buf, static_cast<size_t>(value.size()));
+    auto ptr = reinterpret_cast<const std::byte *>(value.data());
+    buf.insert(buf.end(), ptr, ptr + value.size());
+  }
+
+  static std::optional<std::vector<T>> deserialize(BufferView &view) {
+    auto size_opt = replikon::serde::deserialize<size_t>(view);
+    if (!size_opt.has_value()) {
+      return std::nullopt;
+    }
+    auto size = *size_opt;
+    if (size > view.size()) {
+      return std::nullopt;
+    }
+
+    std::vector<T> value;
+    value.assign(reinterpret_cast<const char *>(view.data()), size);
+
+    view.consume(size);
+    return std::make_optional(std::move(value));
+  }
+};
+
 // std::array
 template <typename T, size_t N> struct Serializer<std::array<T, N>> {
   static void serialize(Buffer &buf, const std::array<T, N> &value) {

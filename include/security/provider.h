@@ -13,10 +13,7 @@
 namespace replikon::sec {
 class ED25519SecurityProvider {
 public:
-  using Author = Author;
-  using PubKey = PubKey;
-  using PrivKey = PrivKey;
-  using Signature = Signature;
+  using Signature = replikon::Signature;
 
   ED25519SecurityProvider(std::shared_ptr<dao::SecurityDao> dao, Author self,
                           PubKey self_pub_key, PrivKey self_priv_key)

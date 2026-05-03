@@ -4,12 +4,14 @@
 #include "constants.h"
 #include "dao/key_value.h"
 #include "dao/security.h"
+#include "logging.h"
 #include "security/provider.h"
 #include "serial/serde.h"
 #include "sqlite.h"
 #include "traits/crdt.h"
 #include "types.h"
 #include "utils.h"
+#include <algorithm>
 #include <map>
 #include <memory>
 #include <optional>
@@ -19,7 +21,7 @@ template <typename SecurityProvider> class KeysCrdt {
 
 public:
   using Version = uint16_t;
-  using PubKeyMap = std::map<Author, PubKey>;
+  using PubKeyMap = std::vector<std::pair<Author, PubKey>>;
   using Signature = typename SecurityProvider::Signature;
 
   using Header = std::tuple<Author, Version>;
@@ -56,12 +58,13 @@ public:
     auto admin = getAdmin();
     auto version = getPersistedVersion();
     REPLIKON_ASSERT(std::get<Author>(request) == admin);
-
+    LOGD("Received update request, author %s",
+         std::get<Author>(request).c_str());
     auto sign = getPersistedSignature();
 
     PubKeyMap pub_keys{};
     for (auto &&[author, key] : pairs) {
-      pub_keys[author] = key;
+      pub_keys.emplace_back(author, key);
     }
 
     Update update = {admin, version, std::move(pub_keys), sign};
@@ -78,10 +81,11 @@ public:
     }
 
     auto to_check = std::tie(author, version, pub_keys);
-    if (!_provider->isValid(sign, to_check)) {
+    if (!_provider->isValid(sign, author, to_check)) {
       return MergeStatus::SKIPPED;
     }
 
+    // TODO: this better be a tx
     _kv_dao->insertIntegerValue(KEYS_CRDT_VERSION_KEY, version);
     _kv_dao->insertBlobValue(KEYS_CRDT_SIGN_KEY, serde::BufferView{sign});
 
@@ -90,6 +94,22 @@ public:
     }
 
     return MergeStatus::MERGED;
+  }
+
+  void addKey(const Author &author, PubKey pubk) {
+    _sec_dao->insertPublicKey(author, pubk);
+    auto version = getPersistedVersion();
+    version++;
+    auto res = _kv_dao->insertIntegerValue(KEYS_CRDT_VERSION_KEY, version);
+    REPLIKON_ASSERT(res == db::SqliteResult::OK);
+
+    auto keys_res = _sec_dao->getAllPublicKeys();
+    REPLIKON_ASSERT(keys_res.hasValue());
+    auto pairs = keys_res.value();
+    auto sign = _provider->sign(pairs);
+    serde::Buffer sign_buf(sign.begin(), sign.end());
+    LOGD("Inserting signature");
+    _kv_dao->insertBlobValue(KEYS_CRDT_SIGN_KEY, serde::BufferView{sign_buf});
   }
 
 private:
@@ -118,7 +138,7 @@ private:
     auto blob = value.value().value();
     Signature sign;
     REPLIKON_ASSERT(blob.size() == sign.size());
-    sign.assign(blob.begin(), blob.end());
+    std::copy_n(blob.begin(), sign.size(), sign.begin());
     return sign;
   }
 

@@ -6,10 +6,9 @@
 namespace replikon::sec {
 class NoSecurityProvider {
 public:
-  using Author = Author;
-  using PubKey = std::monostate;
-  using PrivKey = std::monostate;
   using Signature = std::monostate;
+  
+  NoSecurityProvider() = default;
 
   template <typename T> //
   Signature sign(const T &value) const {

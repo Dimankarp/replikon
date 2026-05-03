@@ -2,6 +2,7 @@
 #define REPLIKON_DAO_MESSAGE_H
 
 #include "expected.h"
+#include "serial/serde.h"
 #include "sqlite.h"
 #include "types.h"
 #include "utils.h"
@@ -14,12 +15,19 @@ namespace replikon::dao {
 namespace internal {
 
 static const std::string INSERT_MESSAGE =
-    "INSERT OR IGNORE INTO messages (author, body, origin_ts, lamport) "
-    "VALUES (?1, ?2, ?3, ?4) ";
+    "INSERT OR IGNORE INTO messages (author, body, origin_ts, lamport, "
+    "signature) "
+    "VALUES (?1, ?2, ?3, ?4, ?5) ";
 
 static const std::string NEW_MESSAGE =
-    "INSERT OR IGNORE INTO messages (author, body, origin_ts, lamport) "
-    "SELECT ?1, ?2, ?3, COALESCE(MAX(lamport), 0) + 1 "
+    "INSERT OR IGNORE INTO messages (author, body, origin_ts, lamport, "
+    "signature) "
+    "SELECT ?1, ?2, ?3, COALESCE(MAX(lamport), 0) + 1, ?4 "
+    "FROM messages "
+    "WHERE author = ?1";
+
+static const std::string GET_NEXT_LAMPORT =
+    "SELECT COALESCE(MAX(lamport), 0) + 1 "
     "FROM messages "
     "WHERE author = ?1";
 
@@ -39,7 +47,7 @@ static const std::string CLEAR_INTERVALS = "DELETE FROM search_intervals ";
 static const std::string INSERT_INTO_INTERVALS =
     "INSERT INTO search_intervals VALUES (?1, ?2) ";
 static const std::string GET_MSGS_BY_INTERVALS =
-    "SELECT author, body, origin_ts, lamport FROM messages as m "
+    "SELECT author, body, origin_ts, lamport, signature FROM messages as m "
     "JOIN search_intervals as si "
     "ON m.lamport >= si.start AND m.lamport <= si.end "
     "WHERE author = ?1";
@@ -53,7 +61,7 @@ public:
     // empty
   }
 
-  Expected<std::vector<ChatMessage>, db::SqliteError>
+  Expected<std::vector<SignedChatMeesage>, db::SqliteError>
   getAllMessages(const std::string &author,
                  const std::vector<Interval> &intervals) const {
     auto statement_res = _db->prepareStatement(internal::CLEAR_INTERVALS);
@@ -81,46 +89,51 @@ public:
         std::move(statement_res).value();
     res |= get_msgs_by_intervals.bindText(1, author);
 
-    std::vector<ChatMessage> messages;
+    std::vector<SignedChatMeesage> messages;
     while (get_msgs_by_intervals.step() == db::SqliteResult::ROW) {
       std::string author_val = get_msgs_by_intervals.columnText(0);
       std::string body_val = get_msgs_by_intervals.columnText(1);
       int64_t origin_ts = get_msgs_by_intervals.columnInt64(2);
       int64_t lamport = get_msgs_by_intervals.columnInt64(3);
-      messages.push_back({author_val, static_cast<uint64_t>(lamport),
-                          static_cast<uint64_t>(origin_ts), body_val});
+      serde::Buffer sign = get_msgs_by_intervals.columnBlobAsBuffer(4);
+      messages.push_back(
+          SignedChatMeesage{{author_val, static_cast<uint64_t>(lamport),
+                             static_cast<uint64_t>(origin_ts), body_val},
+                            std::move(sign)});
     }
     return messages;
   }
 
-  db::SqliteResult insertMessage(const ChatMessage &message) {
+  db::SqliteResult insertMessage(const SignedChatMeesage &signed_msg) {
     auto statement_res = _db->prepareStatement(internal::INSERT_MESSAGE);
     if (!statement_res.hasValue()) {
       return db::SqliteResult::ERROR;
     }
     db::PreparedStatement insert_message = std::move(statement_res).value();
     db::SqliteResult res;
+    auto &&message = signed_msg.msg;
     res |= insert_message.bindText(1, message.author);
     res |= insert_message.bindText(2, message.body);
     res |= insert_message.bindInt64(3, message.origin_ts);
     res |= insert_message.bindInt64(4, message.lamport);
+    res |= insert_message.bindBlob(5, signed_msg.sign);
     res |= insert_message.step();
     return res;
   }
 
-  db::SqliteResult newMessage(const std::string &author,
-                              const std::string &body, uint64_t origin_ts) {
-    auto statement_res = _db->prepareStatement(internal::NEW_MESSAGE);
-    if (!statement_res.hasValue()) {
-      return db::SqliteResult::ERROR;
+  Expected<uint64_t, db::SqliteError>
+  getNextLamport(const Author &author) const {
+    auto statement_res = _db->prepareStatement(internal::GET_NEXT_LAMPORT);
+    RETURN_IF_ERROR(statement_res);
+    db::PreparedStatement get_lamport = std::move(statement_res).value();
+
+    auto res = get_lamport.bindText(1, author);
+
+    if (get_lamport.step() == db::SqliteResult::ROW) {
+      int64_t lamport = get_lamport.columnInt64(0);
+      return lamport;
     }
-    db::PreparedStatement insert_message = std::move(statement_res).value();
-    db::SqliteResult res;
-    res |= insert_message.bindText(1, author);
-    res |= insert_message.bindText(2, body);
-    res |= insert_message.bindInt64(3, origin_ts);
-    res |= insert_message.step();
-    return res;
+    return Unexpected<db::SqliteError>{{}};
   }
 
   Expected<std::map<std::string, std::vector<Interval>>, db::SqliteError>

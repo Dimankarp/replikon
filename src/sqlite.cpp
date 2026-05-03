@@ -77,6 +77,17 @@ const void *PreparedStatement::columnBlob(uint index) {
   return sqlite3_column_blob(_stmt, index);
 }
 
+const serde::Buffer PreparedStatement::columnBlobAsBuffer(uint index) {
+  serde::Buffer buf;
+  auto ptr = sqlite3_column_blob(_stmt, index);
+  auto size = sqlite3_column_bytes(_stmt, index);
+  if (ptr && size > 0) {
+    buf.assign(reinterpret_cast<const std::byte *>(ptr),
+               reinterpret_cast<const std::byte *>(ptr) + size);
+  }
+  return buf;
+}
+
 size_t PreparedStatement::columnBytes(uint index) {
   return sqlite3_column_bytes(_stmt, index);
 }

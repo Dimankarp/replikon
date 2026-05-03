@@ -12,8 +12,8 @@
 #define REPLIKON_ASSERT(condition)                                             \
   do {                                                                         \
     if (!(condition)) {                                                        \
-      fprintf(stderr, "Assertion failed: ( %s ), %s\nat %s:%d\n", #condition,  \
-              __PRETTY_FUNCTION__, __FILE__, __LINE__);                        \
+      fprintf(stderr, "Assertion failed: ( %s ) at %s:%d\n", #condition,       \
+              __FILE__, __LINE__);                                             \
       std::abort();                                                            \
     }                                                                          \
   } while (0)

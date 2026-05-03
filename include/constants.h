@@ -10,7 +10,8 @@ const static std::string INIT_MESSAGES = "CREATE TABLE IF NOT EXISTS messages ("
                                          "author TEXT NOT NULL,"
                                          "origin_ts INTEGER,"
                                          "lamport INTEGER NOT NULL,"
-                                         "body TEXT)";
+                                         "body TEXT,"
+                                         "signature BLOB)";
 
 const static std::string INDEX_MESSAGES =
     "CREATE UNIQUE INDEX IF NOT EXISTS idx_messages_lamport "

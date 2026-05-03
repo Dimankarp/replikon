@@ -64,6 +64,7 @@ public:
   std::string columnText(uint index);
   int64_t columnInt64(uint index);
   const void *columnBlob(uint index);
+  const serde::Buffer columnBlobAsBuffer(uint index);
   size_t columnBytes(uint index);
 
 private:

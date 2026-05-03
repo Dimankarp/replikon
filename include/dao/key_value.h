@@ -107,13 +107,7 @@ public:
 
     res = statement.step();
     if (res == db::SqliteResult::ROW) {
-      auto ptr = statement.columnBlob(0);
-      auto size = statement.columnBytes(0);
-      serde::Buffer buf;
-      if (ptr && size > 0) {
-        buf.assign(reinterpret_cast<const std::byte *>(ptr),
-                   reinterpret_cast<const std::byte *>(ptr) + size);
-      }
+      auto buf = statement.columnBlobAsBuffer(0);
       return std::make_optional(std::move(buf));
     }
 

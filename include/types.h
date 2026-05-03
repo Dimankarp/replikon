@@ -15,6 +15,11 @@ struct ChatMessage {
   std::string body;
 };
 
+struct SignedChatMeesage{
+  ChatMessage msg;
+  serde::Buffer sign;
+};
+
 using Author = std::string;
 using PubKey = std::array<std::byte, crypto_sign_PUBLICKEYBYTES>;
 using PrivKey = std::array<std::byte, crypto_sign_SECRETKEYBYTES>;
