@@ -30,8 +30,9 @@ public:
 
   KeysCrdt(std::shared_ptr<dao::KeyValueDao> kv_dao,
            std::shared_ptr<dao::SecurityDao> sec_dao,
-           std::shared_ptr<SecurityProvider> provider)
-      : _kv_dao{kv_dao}, _sec_dao{sec_dao}, _provider{provider} {}
+           std::shared_ptr<SecurityProvider> provider, Author self)
+      : _kv_dao{kv_dao}, _sec_dao{sec_dao}, _provider{provider},
+        _self{std::move(self)} {}
 
 public:
   Header getHeader() const {
@@ -74,8 +75,11 @@ public:
   MergeStatus merge(Update update) {
     auto &&[local_author, local_version] = getHeader();
     auto &&[author, version, pub_keys, sign] = update;
-
+    LOGD("Comparing local author %s, remote author %s", local_author.c_str(),
+         author.c_str());
     REPLIKON_ASSERT(local_author == author);
+    LOGD("Comparing local version %lu, remote version %lu", local_version,
+         version);
     if (local_version >= version) {
       return MergeStatus::SKIPPED;
     }
@@ -106,7 +110,9 @@ public:
     auto keys_res = _sec_dao->getAllPublicKeys();
     REPLIKON_ASSERT(keys_res.hasValue());
     auto pairs = keys_res.value();
-    auto sign = _provider->sign(pairs);
+    auto to_sign = std::tie(_self, version, pairs);
+    LOGD("To sign _self %s", _self.c_str());
+    auto sign = _provider->sign(to_sign);
     serde::Buffer sign_buf(sign.begin(), sign.end());
     LOGD("Inserting signature");
     _kv_dao->insertBlobValue(KEYS_CRDT_SIGN_KEY, serde::BufferView{sign_buf});
@@ -146,6 +152,7 @@ private:
   std::shared_ptr<dao::KeyValueDao> _kv_dao;
   std::shared_ptr<dao::SecurityDao> _sec_dao;
   std::shared_ptr<SecurityProvider> _provider;
+  Author _self;
 }; // namespace replikon::crdt
 
 static_assert(traits::IsCRDT<KeysCrdt<sec::ED25519SecurityProvider>>::value,

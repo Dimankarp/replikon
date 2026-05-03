@@ -10,22 +10,14 @@
 #include "utils.h"
 
 #include <iostream>
-#include <memory>
+#include "test_utils.h"
 
 using namespace replikon;
 
-class LogCRDTTest : public ::testing::Test {
+class LogCRDTTest : public test::ReplikonTest {
 protected:
-  void SetUp() override {
-    replikon::setLogFile(stderr);
-    auto sodium_init_res = sodium_init();
-    REPLIKON_ASSERT(sodium_init_res >= 0);
-  }
-
   std::unique_ptr<Instance> createInstance(const std::string &name) {
-    auto keys = sec::ED25519SecurityProvider::generateKeys();
-    SecurityUserInfo self = {name, keys.first, keys.second};
-    return std::make_unique<Instance>(":memory:", std::move(self));
+    return test::createTestInstance(name);
   }
 };
 

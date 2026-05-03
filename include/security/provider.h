@@ -2,6 +2,7 @@
 #define REPLIKON_SECURITY_PROVIDER_H
 
 #include "dao/security.h"
+#include "logging.h"
 #include "serial/serde.h"
 #include "sodium.h"
 #include "types.h"
@@ -42,6 +43,8 @@ public:
         reinterpret_cast<const unsigned char *>(view.data()), view.size(),
         reinterpret_cast<const unsigned char *>(_self_priv_key.data()));
     REPLIKON_ASSERT(res == 0);
+    LOGD("Signing: toSign: %s, signature %s", hexStr(buf).c_str(),
+         hexStr(s).c_str());
     return s;
   }
 
@@ -62,6 +65,8 @@ public:
         reinterpret_cast<const unsigned char *>(s.data()),
         reinterpret_cast<const unsigned char *>(view.data()), view.size(),
         reinterpret_cast<const unsigned char *>(user_info.pub_key.data()));
+    LOGD("IsValid: toCheck: %s, signature %s, verdict %d", hexStr(buf).c_str(),
+         hexStr(s).c_str(), res);
     return res == 0;
   }
 

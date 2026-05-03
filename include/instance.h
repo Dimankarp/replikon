@@ -54,7 +54,7 @@ public:
         std::make_unique<crdt::Log<ChatMessage, sec::ED25519SecurityProvider>>(
             _messages_dao, _security_provider);
     _keys = std::make_unique<crdt::KeysCrdt<sec::ED25519SecurityProvider>>(
-        _kv_dao, _security_dao, _security_provider);
+        _kv_dao, _security_dao, _security_provider, _self.author);
   }
 
 public:
@@ -69,6 +69,15 @@ public:
     auto res = _security_dao->insertAdminPublicKey(admin, pubk);
     REPLIKON_ASSERT(res == db::SqliteResult::OK);
   }
+
+  std::shared_ptr<dao::KeyValueDao> kvDao() const { return _kv_dao; }
+  std::shared_ptr<dao::MessagesDao> messagesDao() const {
+    return _messages_dao;
+  }
+  std::shared_ptr<dao::SecurityDao> securityDao() const {
+    return _security_dao;
+  }
+  std::shared_ptr<replikon::db::Sqlite> db() const { return _db; }
 
 private:
   std::shared_ptr<dao::MessagesDao> _messages_dao;

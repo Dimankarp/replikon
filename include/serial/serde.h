@@ -102,8 +102,9 @@ template <> struct Serializer<std::string> {
 template <typename T> struct Serializer<std::vector<T>> {
   static void serialize(Buffer &buf, const std::vector<T> &value) {
     replikon::serde::serialize(buf, static_cast<size_t>(value.size()));
-    auto ptr = reinterpret_cast<const std::byte *>(value.data());
-    buf.insert(buf.end(), ptr, ptr + value.size());
+    for (const auto &item : value) {
+      replikon::serde::serialize(buf, item);
+    }
   }
 
   static std::optional<std::vector<T>> deserialize(BufferView &view) {
@@ -112,14 +113,15 @@ template <typename T> struct Serializer<std::vector<T>> {
       return std::nullopt;
     }
     auto size = *size_opt;
-    if (size > view.size()) {
-      return std::nullopt;
-    }
-
     std::vector<T> value;
-    value.assign(reinterpret_cast<const char *>(view.data()), size);
-
-    view.consume(size);
+    value.reserve(size);
+    for (size_t i = 0; i < size; ++i) {
+      auto item_opt = replikon::serde::deserialize<T>(view);
+      if (!item_opt.has_value()) {
+        return std::nullopt;
+      }
+      value.push_back(std::move(*item_opt));
+    }
     return std::make_optional(std::move(value));
   }
 };
@@ -144,6 +146,27 @@ template <typename T, size_t N> struct Serializer<std::array<T, N>> {
     return std::make_optional(std::move(value));
   }
 };
+
+// std::pair
+template <typename T1, typename T2> struct Serializer<std::pair<T1, T2>> {
+  static void serialize(Buffer &buf, const std::pair<T1, T2> &value) {
+    replikon::serde::serialize(buf, value.first);
+    replikon::serde::serialize(buf, value.second);
+  }
+
+  static std::optional<std::pair<T1, T2>> deserialize(BufferView &view) {
+    auto first_opt = replikon::serde::deserialize<T1>(view);
+    if (!first_opt.has_value()) {
+      return std::nullopt;
+    }
+    auto second_opt = replikon::serde::deserialize<T2>(view);
+    if (!second_opt.has_value()) {
+      return std::nullopt;
+    }
+    return std::make_optional(std::make_pair(std::move(*first_opt), std::move(*second_opt)));
+  }
+};
+
 
 // std::optional
 template <typename T> struct Serializer<std::optional<T>> {

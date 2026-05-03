@@ -33,13 +33,14 @@ add_executable(replikon ${APP})
 target_link_libraries(replikon PRIVATE replikon_lib)
 
 enable_testing()
-add_executable(test_log_crdt tests/test_log_crdt.cpp)
-target_link_libraries(test_log_crdt PRIVATE replikon_lib GTest::gtest_main)
+file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/tests/*_test.cpp")
+add_executable(replikon_tests ${TEST_SOURCES})
+target_link_libraries(replikon_tests PRIVATE replikon_lib GTest::gtest_main)
 
 include(GoogleTest)
-gtest_discover_tests(test_log_crdt)
+gtest_discover_tests(replikon_tests)
 
-set_target_properties(replikon test_log_crdt PROPERTIES
+set_target_properties(replikon replikon_tests PROPERTIES
     CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON
 )

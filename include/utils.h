@@ -3,7 +3,10 @@
 
 #include <cstdint>
 #include <cstdlib>
+#include <iomanip>
+#include <ios>
 #include <stdio.h>
+#include <string>
 #include <vector>
 
 #ifdef NDEBUG
@@ -41,7 +44,7 @@ inline bool isMonotonicNonColliding(const std::vector<Interval> &a) {
     return true;
   }
 
-  for (int i = 0; i < a.size() - 1; i++) {
+  for (size_t i = 0; i < a.size() - 1; i++) {
     if (a[i].len == 0)
       return false;
     auto cur_end = a[i].start + a[i].len - 1;
@@ -110,6 +113,16 @@ intervalsDifference(std::vector<Interval> a_vec,
   }
 
   return result;
+}
+
+template <typename C>
+std::string hexStr(const C& data)
+{
+    std::ostringstream output;
+    output << std::hex << std::setw(2) << std::setfill('0');
+    for(const auto &elem : data)
+        output << static_cast<unsigned>(elem);
+    return output.str();
 }
 
 } // namespace replikon
