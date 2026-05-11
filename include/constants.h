@@ -35,11 +35,17 @@ const static std::string INIT_KEY_VALUE =
     "key TEXT UNIQUE NOT NULL,"
     "value BLOB)";
 
+
 const size_t HASH_LEN = crypto_generichash_blake2b_BYTES;
 
 const std::string KEYS_CRDT_VERSION_KEY = "keys_crdt_version";
 const std::string KEYS_CRDT_SIGN_KEY = "keys_crdt_sign";
+
 const std::string ADMIN_AUTHOR_KEY = "admin_author";
+
+const std::string CHAT_META_VERSION_KEY = "chat_meta_version";
+const std::string CHAT_META_SIGN_KEY = "chat_meta_sign";
+const std::string CHAT_META_KEY = "chat_meta";
 
 } // namespace replikon
 

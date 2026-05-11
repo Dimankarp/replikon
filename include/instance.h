@@ -3,6 +3,7 @@
 
 #include "crdt/keys.h"
 #include "crdt/log.h"
+#include "crdt/chat_meta.h"
 #include "dao/key_value.h"
 #include "dao/message.h"
 #include "dao/security.h"
@@ -15,7 +16,7 @@ namespace replikon {
 
 class Instance {
 public:
-  Instance(const std::string &db_path, SecurityUserInfo self)
+  Instance(const std::string &db_path, SecurityUserInfo self, Author admin = "")
       : _self{std::move(self)} {
     _db = std::make_shared<replikon::db::Sqlite>();
     auto res = _db->connect(db_path);
@@ -55,6 +56,10 @@ public:
             _messages_dao, _security_provider);
     _keys = std::make_unique<crdt::KeysCrdt<sec::ED25519SecurityProvider>>(
         _kv_dao, _security_dao, _security_provider, _self.author);
+    
+    Author actual_admin = admin.empty() ? _self.author : admin;
+    _chat_meta = std::make_unique<crdt::ChatMetaCrdt<sec::ED25519SecurityProvider, std::string>>(
+        _kv_dao, _security_provider, _self.author, std::move(actual_admin));
   }
 
 public:
@@ -62,6 +67,7 @@ public:
     return *_messages_log;
   }
   crdt::KeysCrdt<sec::ED25519SecurityProvider> &keysCrdt() & { return *_keys; }
+  crdt::ChatMetaCrdt<sec::ED25519SecurityProvider, std::string> &chatMetaCrdt() & { return *_chat_meta; }
 
   const SecurityUserInfo &self() const & { return _self; }
 
@@ -78,6 +84,7 @@ public:
     return _security_dao;
   }
   std::shared_ptr<replikon::db::Sqlite> db() const { return _db; }
+  std::shared_ptr<sec::ED25519SecurityProvider> securityProvider() const { return _security_provider; }
 
 private:
   std::shared_ptr<dao::MessagesDao> _messages_dao;
@@ -88,6 +95,7 @@ private:
   std::unique_ptr<crdt::Log<ChatMessage, sec::ED25519SecurityProvider>>
       _messages_log;
   std::unique_ptr<crdt::KeysCrdt<sec::ED25519SecurityProvider>> _keys;
+  std::unique_ptr<crdt::ChatMetaCrdt<sec::ED25519SecurityProvider, std::string>> _chat_meta;
   SecurityUserInfo _self;
 };
 

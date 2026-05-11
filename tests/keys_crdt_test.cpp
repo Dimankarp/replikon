@@ -25,7 +25,7 @@ TEST_F(ReplikonTest, KeysCrdtBasicAddAndGet) {
 
 TEST_F(ReplikonTest, KeysCrdtMergeEmptyAndConflicts) {
   auto instance1 = test::createTestInstance("alice");
-  auto instance2 = test::createTestInstance("bob", "test");
+  auto instance2 = test::createTestInstance("bob");
 
   auto admin = instance1->self();
   instance1->setAdmin(admin.author, admin.pub_key);
