@@ -60,9 +60,9 @@ public:
     res |= statement.step();
     return res;
   }
-    template<typename Serializable>
-    db::SqliteResult insertBlobValue(const std::string &key,
-                                   const Serializable& value) {
+  template <typename Serializable>
+  db::SqliteResult insertBlobValue(const std::string &key,
+                                   const Serializable &value) {
     auto statement_res = _db->prepareStatement(internal::INSERT_VALUE);
     if (!statement_res.hasValue()) {
       return db::SqliteResult::ERROR;
@@ -70,9 +70,7 @@ public:
     auto statement = std::move(statement_res).value();
     auto res = statement.bindText(1, key);
 
-    serde::Buffer buf;
-    serde::serialize(buf, value);
-    res |= statement.bindBlob(2, buf);
+    res |= statement.bindSerializableAsBlob(2, value);
     res |= statement.step();
     return res;
   }
@@ -134,8 +132,8 @@ public:
     return Unexpected{db::SqliteError{}};
   }
 
-  template<typename Serializable>
-    Expected<std::optional<Serializable>, db::SqliteError>
+  template <typename Serializable>
+  Expected<std::optional<Serializable>, db::SqliteError>
   getBlobValue(const std::string &key) {
     auto statement_res = _db->prepareStatement(internal::GET_VALUE);
     RETURN_IF_ERROR(statement_res);
@@ -144,9 +142,7 @@ public:
 
     res = statement.step();
     if (res == db::SqliteResult::ROW) {
-      auto buf = statement.columnBlobAsBuffer(0);
-      auto serializable = serde::deserialize<Serializable>(buf);
-      return serializable;
+      return statement.columnBlobAsSerializable<Serializable>(0);
     }
 
     if (res == db::SqliteResult::OK) {

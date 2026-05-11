@@ -61,10 +61,22 @@ public:
   [[nodiscard]] SqliteResult bindInt64(uint index, int64_t arg);
   [[nodiscard]] SqliteResult bindText(uint index, const std::string &arg);
   [[nodiscard]] SqliteResult bindBlob(uint index, const serde::BufferView view);
+  template <typename Serializable>
+  [[nodiscard]] SqliteResult bindSerializableAsBlob(uint index,
+                                                    const Serializable &value) {
+    serde::Buffer buf;
+    serde::serialize(buf, value);
+    return bindBlob(index, buf);
+  }
   std::string columnText(uint index);
   int64_t columnInt64(uint index);
   const void *columnBlob(uint index);
-  const serde::Buffer columnBlobAsBuffer(uint index);
+  serde::Buffer columnBlobAsBuffer(uint index);
+  template <typename Serializable>
+  std::optional<Serializable> columnBlobAsSerializable(uint index) {
+    auto buf = columnBlobAsBuffer(index);
+    return serde::deserialize<Serializable>(buf);
+  }
   size_t columnBytes(uint index);
 
 private:

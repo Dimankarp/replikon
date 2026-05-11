@@ -5,6 +5,7 @@
 #include "expected.h"
 #include "serial/serde.h"
 #include "sqlite3.h"
+#include <optional>
 #include <variant>
 
 namespace replikon::db {
@@ -58,13 +59,14 @@ Sqlite::prepareStatement(std::string statement) {
 [[nodiscard]] SqliteResult PreparedStatement::bindText(uint index,
                                                        const std::string &arg) {
   return toEnum(
-      sqlite3_bind_text(_stmt, index, arg.c_str(), arg.size(), SQLITE_STATIC));
+      sqlite3_bind_text(_stmt, index, arg.c_str(), arg.size(), SQLITE_TRANSIENT));
 }
 [[nodiscard]] SqliteResult
 PreparedStatement::bindBlob(uint index, const serde::BufferView view) {
   return toEnum(
-      sqlite3_bind_blob(_stmt, index, view.data(), view.size(), SQLITE_STATIC));
+      sqlite3_bind_blob(_stmt, index, view.data(), view.size(), SQLITE_TRANSIENT));
 }
+
 std::string PreparedStatement::columnText(uint index) {
   auto res = (char *)sqlite3_column_text(_stmt, index);
   return res != nullptr ? std::string{res} : "";
@@ -77,7 +79,7 @@ const void *PreparedStatement::columnBlob(uint index) {
   return sqlite3_column_blob(_stmt, index);
 }
 
-const serde::Buffer PreparedStatement::columnBlobAsBuffer(uint index) {
+serde::Buffer PreparedStatement::columnBlobAsBuffer(uint index) {
   serde::Buffer buf;
   auto ptr = sqlite3_column_blob(_stmt, index);
   auto size = sqlite3_column_bytes(_stmt, index);

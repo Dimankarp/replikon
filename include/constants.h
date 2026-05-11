@@ -35,6 +35,13 @@ const static std::string INIT_KEY_VALUE =
     "key TEXT UNIQUE NOT NULL,"
     "value BLOB)";
 
+const static std::string INIT_USER_META =
+    "CREATE TABLE IF NOT EXISTS user_meta ("
+    "id INTEGER PRIMARY KEY,"
+    "author TEXT NOT NULL,"
+    "lamport INTEGER NOT NULL,"
+    "meta BLOB NOT NULL,"
+    "signature BLOB NOT NULL)";
 
 const size_t HASH_LEN = crypto_generichash_blake2b_BYTES;
 

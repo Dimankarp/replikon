@@ -1,9 +1,11 @@
 #ifndef REPLIKON_INSTANCE_H
 #define REPLIKON_INSTANCE_H
 
+#include "constants.h"
+#include "crdt/chat_meta.h"
 #include "crdt/keys.h"
 #include "crdt/log.h"
-#include "crdt/chat_meta.h"
+#include "crdt/user_meta.h"
 #include "dao/key_value.h"
 #include "dao/message.h"
 #include "dao/security.h"
@@ -41,6 +43,11 @@ public:
     res = statement.step();
     REPLIKON_ASSERT(res == db::SqliteResult::OK);
 
+    exp = _db->prepareStatement(replikon::INIT_USER_META);
+    statement = std::move(exp.value());
+    res = statement.step();
+    REPLIKON_ASSERT(res == db::SqliteResult::OK);
+
     exp = _db->prepareStatement(replikon::INIT_KEY_VALUE);
     statement = std::move(exp.value());
     res = statement.step();
@@ -49,6 +56,7 @@ public:
     _messages_dao = std::make_shared<dao::MessagesDao>(_db);
     _security_dao = std::make_shared<dao::SecurityDao>(_db);
     _kv_dao = std::make_shared<dao::KeyValueDao>(_db);
+    _user_meta_dao = std::make_shared<dao::UserMetaDao<std::string>>(_db);
     _security_provider = std::make_shared<sec::ED25519SecurityProvider>(
         _security_dao, _self.author, _self.pub_key, _self.priv_key.value());
     _messages_log =
@@ -56,10 +64,15 @@ public:
             _messages_dao, _security_provider);
     _keys = std::make_unique<crdt::KeysCrdt<sec::ED25519SecurityProvider>>(
         _kv_dao, _security_dao, _security_provider, _self.author);
-    
+
     Author actual_admin = admin.empty() ? _self.author : admin;
-    _chat_meta = std::make_unique<crdt::ChatMetaCrdt<sec::ED25519SecurityProvider, std::string>>(
+    _chat_meta = std::make_unique<
+        crdt::ChatMetaCrdt<sec::ED25519SecurityProvider, std::string>>(
         _kv_dao, _security_provider, _self.author, std::move(actual_admin));
+        
+    _user_meta_crdt = std::make_unique<
+        crdt::UserMetaCrdt<std::string, sec::ED25519SecurityProvider>>(
+        _user_meta_dao, _security_provider, _self.author);
   }
 
 public:
@@ -67,7 +80,14 @@ public:
     return *_messages_log;
   }
   crdt::KeysCrdt<sec::ED25519SecurityProvider> &keysCrdt() & { return *_keys; }
-  crdt::ChatMetaCrdt<sec::ED25519SecurityProvider, std::string> &chatMetaCrdt() & { return *_chat_meta; }
+  crdt::ChatMetaCrdt<sec::ED25519SecurityProvider, std::string> &
+  chatMetaCrdt() & {
+    return *_chat_meta;
+  }
+  crdt::UserMetaCrdt<std::string, sec::ED25519SecurityProvider> &
+  userMetaCrdt() & {
+    return *_user_meta_crdt;
+  }
 
   const SecurityUserInfo &self() const & { return _self; }
 
@@ -84,18 +104,23 @@ public:
     return _security_dao;
   }
   std::shared_ptr<replikon::db::Sqlite> db() const { return _db; }
-  std::shared_ptr<sec::ED25519SecurityProvider> securityProvider() const { return _security_provider; }
+  std::shared_ptr<sec::ED25519SecurityProvider> securityProvider() const {
+    return _security_provider;
+  }
 
 private:
   std::shared_ptr<dao::MessagesDao> _messages_dao;
   std::shared_ptr<dao::SecurityDao> _security_dao;
   std::shared_ptr<dao::KeyValueDao> _kv_dao;
+  std::shared_ptr<dao::UserMetaDao<std::string>> _user_meta_dao;
   std::shared_ptr<replikon::db::Sqlite> _db;
   std::shared_ptr<sec::ED25519SecurityProvider> _security_provider;
   std::unique_ptr<crdt::Log<ChatMessage, sec::ED25519SecurityProvider>>
       _messages_log;
   std::unique_ptr<crdt::KeysCrdt<sec::ED25519SecurityProvider>> _keys;
-  std::unique_ptr<crdt::ChatMetaCrdt<sec::ED25519SecurityProvider, std::string>> _chat_meta;
+  std::unique_ptr<crdt::ChatMetaCrdt<sec::ED25519SecurityProvider, std::string>>
+      _chat_meta;
+  std::unique_ptr<crdt::UserMetaCrdt<std::string, sec::ED25519SecurityProvider>> _user_meta_crdt;
   SecurityUserInfo _self;
 };
 

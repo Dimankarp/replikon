@@ -115,6 +115,12 @@ intervalsDifference(std::vector<Interval> a_vec,
   return result;
 }
 
+template<typename Container, typename Element>
+bool contains(const Container& c, const Element& e){
+  return std::find(std::begin(c), std::end(c)) != std::end(c);
+}
+
+
 template <typename C>
 std::string hexStr(const C& data)
 {
