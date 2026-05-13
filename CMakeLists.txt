@@ -4,6 +4,12 @@ project(Compiler C CXX)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+option(ENABLE_COVERAGE "Enable coverage reporting" OFF)
+if(ENABLE_COVERAGE)
+    add_compile_options(--coverage -O0 -g)
+    add_link_options(--coverage)
+endif()
+
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/depends/sqlite3
@@ -34,6 +40,7 @@ target_link_libraries(replikon PRIVATE replikon_lib)
 
 enable_testing()
 file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/tests/*_test.cpp")
+
 add_executable(replikon_tests ${TEST_SOURCES})
 target_link_libraries(replikon_tests PRIVATE replikon_lib GTest::gtest_main)
 

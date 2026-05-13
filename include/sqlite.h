@@ -99,6 +99,8 @@ public:
   [[nodiscard]] Expected<PreparedStatement, SqliteError>
   prepareStatement(std::string statement);
 
+  sqlite3 *getConn() const { return _conn; }
+
 private:
   sqlite3 *_conn = nullptr;
 };

@@ -15,7 +15,7 @@ const static std::string INIT_MESSAGES = "CREATE TABLE IF NOT EXISTS messages ("
 
 const static std::string INDEX_MESSAGES =
     "CREATE UNIQUE INDEX IF NOT EXISTS idx_messages_lamport "
-    "ON messages (id, lamport)";
+    "ON messages (author, lamport)";
 
 const static std::string TEMP_SEARCH_INTERVALS =
     "CREATE TEMP TABLE search_intervals "

@@ -37,6 +37,10 @@ enum class MergeStatus : uint8_t { MERGED, SKIPPED };
 struct Interval {
   uint64_t start;
   uint64_t len;
+
+  bool operator==(const Interval &other) const {
+    return start == other.start && len == other.len;
+  }
 };
 
 inline bool isMonotonicNonColliding(const std::vector<Interval> &a) {
